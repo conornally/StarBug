@@ -1,0 +1,48 @@
+#### INPUTS ####
+Number of Epochs = 4
+Number of Bands = 2
+
+#syntax F$(Band)_$(Epoch)=/path/to/file.fits
+F1_1=
+F1_2=
+F1_3=
+F1_4=
+
+F2_1=
+F2_2=
+F2_3=
+F2_4=
+
+#syntax A$(Band)_$(Epoch)=/path/to/file.als
+
+A1_1=
+A1_2=
+A1_3=
+A1_4=
+
+A2_1=
+A2_2=
+A2_3=
+A2_4=
+
+
+
+#### CORRECTIONS ####
+Band1 Zero Point = 280900
+Band1 Zero Point Error = 4100
+Band1 Colour Correction = 1.0063
+
+Band2 Zero Point = 179700
+Band2 Zero Point Error = 2600
+Band2 Colour Correction = 1.0080
+
+
+#### CROPPING ####
+Band1 Min Mag = 14
+Band1 Max Mag = 20
+Band1 Mag Error = 0.4
+Band1 Max Sharp = 2.0
+Band1 Min Sharp = -3.0
+Band1 Max Round = 1.5
+Band1 Min Round = -1.5
+
