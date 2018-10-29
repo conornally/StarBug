@@ -1,4 +1,6 @@
+import os
 from fitsclass import FITS
+from fileio import *
 import numpy as np
 from astropy.io import fits
 
@@ -9,6 +11,16 @@ flat field multiplication
 >> need to stack multple frames of this together
 """
 
+def pre_adjustments( fitslist ):
+    """
+    FUNC: conducts cropping, scaling, naming of fits files beforethey are put though daophot or photutils
+    """
+    if not os.path.isdir('out'): os.system('mkdir out')    
+    if type(fitslist) == FITS: fitslist = [fitslist]
+    for fits in fitslist:
+        fits.scale()
+        fits.crop()
+        fits.export("out/%s"%fits.name, overwrite=True)
 
 
 def darkFrame_build(darks):
@@ -42,16 +54,4 @@ def save(f):
     hdu.writeto('tmp', overwrite=True)
 
 if __name__=='__main__':
-    d1 = FITS('../test/dark1.fits')
-    d2 = FITS('../test/dark2.fits')
-    d1 = darkFrame_build([d1,d2])
-    
-    fl1 = FITS('../test/flat1.fits')
-    fl2 = FITS('../test/flat2.fits')
-    fl1 = flatFrame_build([fl1,fl2])
-
-    f1 = FITS('../test/frame1.fits')
-
-    f1.subtract(d1)
-    f1.divide(fl1)
-    save(f1)
+    pre_adjustments( fitsfromtxt('test/files.txt'))

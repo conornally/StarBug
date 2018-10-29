@@ -176,7 +176,7 @@ class FITS(object):
     def export(self, filename='', overwrite=False):
         if filename=='': 
            filename = self.filename
-        logging.info('\x1b[1;33mEXPORTING\x1b[0m: %s --> %s'%(self, self.filename))
+        logging.info('\x1b[1;33mEXPORTING\x1b[0m: %s --> %s'%(self, filename))
         fits.PrimaryHDU(data=self.data, header=self.header).writeto(filename, overwrite=overwrite)
         
     def __repr__(self):
