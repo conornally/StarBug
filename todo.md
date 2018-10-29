@@ -7,6 +7,10 @@ main file:
 > psf build
 > prescience //or does this go into a file of its own 
 
+alsclass.py:
+> need to make sure that if i was to do any python based photometry, it would be able to handle not being taken from a file
+> maybe a subclass?
+
 fileio.py:
 this is a os wrapper around the classes, ideally the classes wont have to know where to put things themselves //keep it general
 > pass in filenames, pass back fits/als objects?
