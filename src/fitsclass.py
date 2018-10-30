@@ -52,11 +52,13 @@ class FITS(object):
             logging.debug('%s data has different size to %s data'%(fitsobj, self))
             return 0
 
-    def multiply(self, fitsobj):
+    def multiply(self, factor):
         """
         FUNC: multiplies self.data by fitsobj.data (element-wise)
         """
-        self.data = np.multiply(self.data, fitsobj.data)
+        if type(factor) == FITS:
+            self.data = np.multiply(self.data, fitsobj.data, dtype='float64')
+        else: self.data = np.multiply(self.data, factor, dtype='float64')
 
     def divide(self, fitsobj):
         """
@@ -103,11 +105,16 @@ class FITS(object):
         print(self.data)
         
 
-    def normalise(self):
+    def normalise(self, scale='max'):
         """
+        INPUT: scale = scaling factor type
+              >max = (default)
         FUNC: Normalises self.data to be between 0 (-1) and 1
         """
-        self.data = np.divide(self.data, np.max(self.data), dtype=np.float64)
+        logging.info("\x1b[1;33mNORMALISING\x1b[0m: %s"%self)
+        if scale=='max': factor = np.nanmax(self.data)
+        elif scale=='median': factor = np.nanmedian(self.data)
+        self.data = np.divide(self.data, factor, dtype=np.float64)
 
     def sigma_clip(self, sigma):
         """
@@ -121,8 +128,8 @@ class FITS(object):
         self.mean, self.median, self.std = stats.sigma_clipped_stats( self.data, sigma=sigma, iters=iters )
         logging.debug("%s: \nmean: %f\n std: %f\n min: %f\n max:%f"%(self, self.mean, self.std, np.min(self.data), np.max(self.data)))
 
-            
-    def scale(self):
+    
+    def unit_scale(self):
         """
         THIS IS NOT GENERAL YET
         It scales the units of the fits file from MJysr-1 to DNs-1
@@ -130,7 +137,7 @@ class FITS(object):
         factor = float(self.header['EXPTIME']) / float(self.header['FLUXCONV'])
         logging.info("\x1b[1;33mSCALING\x1b[0m: %s *= %f"%(self, factor))
         self.header['BUNIT'] = 'DN/s'
-        self.data = np.multiply(self.data, factor, dtype='float64')
+        self.multiply(factor)
 
     def crop(self, auto=True):
         """
@@ -191,10 +198,12 @@ if __name__=='__main__':
     #fake.data = np.ones((2,2))
     #fake.name='FAKE'
     #f1.add_median([f2, f3, fake])
-    #f1.normalise()
+    f1.unit_scale()
+    f1.zero_to_nan()
+    f1.normalise('median')
     #f1.multiply(f2)
     #f1.divide(f2)
     #f1.basic_stats(300,1)
-    f1.crop()
-    f1.scale()
-    f1.export('tmp.fits', True) 
+    #f1.crop()
+    # f1.scale()
+    #f1.export('tmp.fits', True) 

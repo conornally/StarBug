@@ -170,6 +170,7 @@ class ALS_DATA(object):
                 #If i dont crop out the bad sources i will NEED to append 9999 values to sourcelist objects..
             self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
+            logging.info("Sources: %d"%len(self.sourcelist))
 
 
 

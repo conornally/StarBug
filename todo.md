@@ -23,6 +23,17 @@ common_tasks.py
 > dark frame flat field etc
 > 
 
+psf selector 
+> (works for both daophot and photutils?) im sure i can get that to work ahaha...
+
+als2reg
+> think i already have one
+
+
+
+
+
+#################################################
 If i wanted to run pre science on a list of files
 > config option to read from file     //.1
 > create fitsclass for each, conduct all the stuff

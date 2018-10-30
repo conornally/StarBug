@@ -25,6 +25,12 @@ A2_2=
 A2_3=
 A2_4=
 
+# Dark frames: D$(Band)_$(Epoch)_$(Frame)=path/to/file.fits
+DarkFile=
+D1_1_01=
+D1_1_02=
+D1_1_03=
+
 
 
 #### CORRECTIONS ####
