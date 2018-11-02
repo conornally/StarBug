@@ -37,15 +37,6 @@ def flatFrame_build(flats, dark=False):
     """
     INPUT: this is a list or single instance of flats
     FUNC: returns a noralised addition of all the frames
-    
-    if type(flats)==FITS: 
-        flats.normalise()
-        return flats
-    else:
-        for f in flats[1:]:
-            flats[0].add(f)
-        flats[0].normalise()
-        return flats[0]
     """
     #for now im going to do it in the case that there are multiple flat frames, i will generalise to one frame after
     medians = []
@@ -56,10 +47,8 @@ def flatFrame_build(flats, dark=False):
     true_median = np.median(medians)
     for frame in flats:
         frame.multiply(true_median/frame.median)
-        print(np.nanmedian(frame.data))
     flats[0].add_median(flats[1:])
     flats[0].normalise('median')
-        
 
     return(flats[0])
     
@@ -67,8 +56,8 @@ def flatFrame_build(flats, dark=False):
 
 def save(f):
     """this is tmporary, ultimately it will overwrite itself"""
-    hdu = fits.PrimaryHDU(f.data)
-    hdu.writeto('tmp', overwrite=True)
+    hdu = fits.PrimaryHDU(data=f.data, header=f.header)
+    hdu.writeto('tmp.fits', overwrite=True)
 
 if __name__=='__main__':
     #pre_adjustments( fitsfromtxt('test/files.txt'))

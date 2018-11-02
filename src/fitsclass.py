@@ -102,7 +102,6 @@ class FITS(object):
         '''
         logging.debug("Taking median pixel values across: %s"%fitsobj)
         self.data = np.median(fitsdata[:,],0)
-        print(self.data)
         
 
     def normalise(self, scale='max'):

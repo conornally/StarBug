@@ -9,7 +9,7 @@ def listfromtxt(filename, comment='#'):
         for line in f.readlines():
             if line[0] != comment: 
                 names.append(line[:-1])
-    return names
+    return sorted(names)
 
 def fitsfromtxt(filename):
     return([ FITS( name) for name in listfromtxt(filename)])

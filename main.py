@@ -14,15 +14,21 @@ def exit():
     quit('Bye!')
 
 def manual():
-    print('Help Page:')
-    print('help: this page')
+    print('\nHelp Page:\n----------')
     print('pre_adjust: adjustments to fits file before data reduction')
-    print('exit: leaves StarBug')
+    print('flat build: Build flat field frame from list of raw flats and a dark frame')
+    print('dark build: Build dark frame from list of dark flats and a dark frame')
+    print('help: this page')
+    print('exit: leaves StarBug\n')
 
 def pre_adjust():
     pre_adjustments( fitsfromtxt(raw_input('File.txt >> ')))
+def build_flat():
+    save(flatFrame_build( fitsfromtxt(raw_input('Flatsfiles.txt >> ')), FITS( raw_input('Dark Frame.fits >> '))) )
+    
 
 commands = {'pre_adjust': pre_adjust,
+            'flat build': build_flat,
             'help':manual,
             'exit':exit}
 
