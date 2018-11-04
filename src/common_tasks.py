@@ -18,7 +18,7 @@ def pre_adjustments( fitslist ):
     if not os.path.isdir('out'): os.system('mkdir out')    
     if type(fitslist) == FITS: fitslist = [fitslist]
     for fits in fitslist:
-        fits.scale()
+        fits.unit_scale()
         fits.crop()
         fits.export("out/%s"%fits.name, overwrite=True)
 
@@ -51,7 +51,18 @@ def flatFrame_build(flats, dark=False):
     flats[0].normalise('median')
 
     return(flats[0])
-    
+
+def darkFrame_subract(fitslist, dark):
+    """
+    INPUT: Fits list and Fits instance as dark frame
+    FUNC: Subtracts the fits pixel array from each of the fits files
+    """
+    for fits in fitslist:
+        fits.subtract(dark)
+
+def flatField_divide(fitslists, flat):
+    for fits in fitslist:
+        fits.divide(flat)
 
 
 def save(f):
