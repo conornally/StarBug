@@ -60,11 +60,13 @@ class FITS(object):
             self.data = np.multiply(self.data, fitsobj.data, dtype='float64')
         else: self.data = np.multiply(self.data, factor, dtype='float64')
 
-    def divide(self, fitsobj):
+    def divide(self, factor):
         """
         FUNC: divide self.data by fitsobj.data (element-wise)
         """
-        self.data = np.divide(self.data, fitsobj.data)
+        if type(factor) == FITS:
+            self.data = np.divide(self.data, factor.data, dtype='float64')
+        else: self.data = np.divide(self.data, factor, dtype='float64')
 
     def add_mean(self, fitsobj):
         """
@@ -73,10 +75,13 @@ class FITS(object):
         // there is no safety net on this, if one fitsobj doesnt get added, then there is no warning
         """
         if type(fitsobj) == FITS: fitsobj = [fitsobj]
-        count=0.0 #this will breake if fitsobj == None
+        count=1.0 #this will breake if fitsobj == None
         for f in fitsobj:
-            if self.add(f): count +=1.0
-        self.data = np.divide(self.data, count)
+            if self.add(f): 
+                count +=1.0
+                logging.debug('%s contributing to add_mean on %s'%(f,self))
+
+        self.divide(count)
 
     def add_median(self, fitsobj):
         """

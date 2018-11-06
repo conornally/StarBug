@@ -52,15 +52,21 @@ def flatFrame_build(flats, dark=False):
 
     return(flats[0])
 
-def darkFrame_subract(fitslist, dark):
+def darkFrame_subtract(fitslist, dark):
     """
     INPUT: Fits list and Fits instance as dark frame
     FUNC: Subtracts the fits pixel array from each of the fits files
     """
+    if type(dark)==list: dark = dark[0]
     for fits in fitslist:
         fits.subtract(dark)
 
-def flatField_divide(fitslists, flat):
+def flatField_divide(fitslist, flat):
+    """
+    INPUTS: list of Fits instances and flat field fits instance
+    FUNC: divides each pixel array in fitslist by the flat field
+    """
+    if type(flat)==list: flat=flat[0]
     for fits in fitslist:
         fits.divide(flat)
 

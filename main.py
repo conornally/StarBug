@@ -17,6 +17,8 @@ class StarBug:
         self.commands ={'pre_adjust': self.pre_adjust,
                         'build_flat': self.build_flat,
                         'build_dark': self.build_dark,
+                        'subtract_dark': self.darkframe_subtract,
+                        'flatfielding': self.flatfield_divide,
                         'load': self.file_loadin,
                         'show': self.display_loaded,
                         'save': self.save,
@@ -42,7 +44,16 @@ class StarBug:
         self.display_loaded()
 
     def darkframe_subtract(self):
-        darkframe_subtract( self.fitslist[ self.readin('Loaded Group Name >> ')]
+        if self.fitslist['Dark']:
+            darkFrame_subtract( self.fitslist[ self.readin('Loaded Group Name >> ')], self.fitslist['Dark'])
+        else: print('No Dark frame loaded')
+
+    def flatfield_divide(self):
+        if self.fitslist['Flat']:
+            flatField_divide( self.fitslist[ self.readin('Loaded Group Name >> ')], self.fitslist['Flat'])
+        else: print('No flat field loaded')
+
+    
         
 
 
@@ -50,17 +61,20 @@ class StarBug:
     # General Menu / Navigation #
     #############################
     def manual(self):
+                    
         print('\nHelp Page:\n----------')
-        print('\x1b[1;37mpre_adjust\x1b[0m: adjustments to fits file before data reduction')
+        print('\x1b[1;37mpre_adjust\x1b[0m: Adjustments to fits file before data reduction')
         print('\x1b[1;37mbuild_flat\x1b[0m: Build flat field frame from list of raw flats and a dark frame')
         print('\x1b[1;37mbuild_dark\x1b[0m: Build dark frame from list of dark fields')
+        print('\x1b[1;37msubtract_dark\x1b[0m: Subtracts Dark frame (group) from fits group')
+        print('\x1b[1;37mflatfield\x1b[0m: Divides fits group by loaded Flat group')
         print('\x1b[1;37mload\x1b[0m: Give list, or pathfile of fits fits to be loaded into program')
         print('\x1b[1;37mshow\x1b[0m: Display the currently loaded files')
         print('\x1b[1;37msave\x1b[0m: Saves all files from selected load group')
         print('\x1b[1;37mclean\x1b[0m: Deletes out/ directory')
         print('\x1b[1;37mterminal\x1b[0m: Enter terminal mode')
-        print('\x1b[1;37mhelp\x1b[0m: this page')
-        print('\x1b[1;37mexit\x1b[0m: leaves StarBug\n')
+        print('\x1b[1;37mhelp\x1b[0m: Prints this page')
+        print('\x1b[1;37mexit\x1b[0m: Leaves StarBug\n')
 
     def file_loadin(self):
         inString = self.readin('Load Files [Single OR Comma Separated OR From File or Paths]\n>> ') 
@@ -79,7 +93,7 @@ class StarBug:
         except: pass
         group = self.readin('Group Name >> ')
         for f in self.fitslist[group]:
-            f.export('out/'+f.filename)
+            f.export('out/'+f.name)
 
     def clean(self):
         if self.readin('Delete out/ folder [y/n]') =='y':
