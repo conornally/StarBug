@@ -70,6 +70,7 @@ def flatField_divide(fitslist, flat):
     """
     if type(flat)==list: flat=flat[0]
     for fits in fitslist:
+        logging.debug(fits)
         fits.divide(flat)
 
 
