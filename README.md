@@ -13,6 +13,7 @@ Prompted with the file input command, this takes a variety of input styles. A si
 The next *input* is group name; this represents the name for the list (or single) fits object inside the program, and will be used later on for any analysis regime.
 
 *NB:* There is special group names pre-loaded:
+
 | Name | Used for              |
 |------|-----------------------|
 | Dark | The global dark frame |
