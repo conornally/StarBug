@@ -34,24 +34,24 @@ class StarBug:
     # Data Reduction Regimes #
     ##########################
     def pre_adjust(self):
-        pre_adjustments( self.fitslist[ self.readin('Loaded Group Name >> ')])#fitsfromtxt(self.readin('File.txt >> ')))
+        pre_adjustments( self.get_group())#fitsfromtxt(self.readin('File.txt >> ')))
     def build_flat(self):
-        flat = flatFrame_build( self.fitslist[ self.readin('Loaded Group Name >> ')], self.fitslist['Dark'][0])   #fitsfromtxt(self.readin('Flatsfiles.txt >> ')), FITS( self.readin('Dark Frame.fits >> '))) )
+        flat = flatFrame_build( self.get_group(), self.fitslist['Dark'][0])   #fitsfromtxt(self.readin('Flatsfiles.txt >> ')), FITS( self.readin('Dark Frame.fits >> '))) )
         self.fitslist['Flat'] = [flat]
         self.display_loaded()
     def build_dark(self):
-        dark= darkFrame_build( self.fitslist[ self.readin('Loaded Group Name >> ')])  # fitsfromtxt( self.readin('DarksFiles.txt >> '))))
+        dark= darkFrame_build( self.get_group())  # fitsfromtxt( self.readin('DarksFiles.txt >> '))))
         self.fitslist['Dark']= [dark]
         self.display_loaded()
 
     def darkframe_subtract(self):
         if self.fitslist['Dark']:
-            darkFrame_subtract( self.fitslist[ self.readin('Loaded Group Name >> ')], self.fitslist['Dark'])
+            darkFrame_subtract( self.get_group(), self.fitslist['Dark'])
         else: print('No Dark frame loaded')
 
     def flatfield_divide(self):
         if self.fitslist['Flat']:
-            flatField_divide( self.fitslist[ self.readin('Loaded Group Name >> ')], self.fitslist['Flat'])
+            flatField_divide( self.get_group(), self.fitslist['Flat'])
         else: print('No flat field loaded')
 
     
@@ -97,6 +97,12 @@ class StarBug:
         for item in self.fitslist:
             print(item +str(':') + str(self.fitslist[item] ) )
 
+    def get_group(self, string='Name of Loaded Group >> '):
+        instring = self.readin(string)
+        if instring in self.fitslist.keys():
+            return self.fitslist[instring]
+        else: return []
+
     def delete_group(self):
         #Deletes one of the loaded groups
         group = self.readin('Delete Group Name >> ')
@@ -108,11 +114,19 @@ class StarBug:
         
 
     def save(self):
-        try: os.system('mkdir out')
-        except: pass
-        group = self.readin('Group Name >> ')
-        for f in self.fitslist[group]:
-            f.export('out/'+f.name)
+        if not os.path.isdir('out'): os.system('mkdir out')
+        overwrite = False
+        for f in self.get_group():
+            exists = os.path.exists('out/'+f.name)
+            if exists and not overwrite:
+                o = self.readin('Overwrite %s [Y/n/(a)]: '%f)
+                if o=='y' or o=='Y': f.export('out/'+f.name, overwrite=True)
+                elif o=='a' or o=='A':
+                    overwrite = True
+                    f.export('out/'+f.name, overwrite=True)
+            elif not exists: f.export('out/'+f.name, overwrite=True)
+
+
 
     def clean(self):
         if self.readin('Delete out/ folder [y/n]') =='y':

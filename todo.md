@@ -8,6 +8,8 @@ main file:
 > prescience //or does this go into a file of its own 
 > image reduction
 
+> need to create group selector protection, so if you put in group name that doesnt exist it wont crash
+
 alsclass.py:
 > need to make sure that if i was to do any python based photometry, it would be able to handle not being taken from a file
 > maybe a subclass?
