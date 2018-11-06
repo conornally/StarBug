@@ -35,8 +35,25 @@ This will prompt a group name, the contents will be saved into `./out/filename.f
 
 `> terminal`
 
-This [in theory] allows the user to access basic bash commands to navigate/manipulate files/execute other programs, while still inside StarBug. Useful to create input files, move outputs and check results, without losing loaded StarBug files.
+This [in theory] allows the user to access basic bash commands to navigate/manipulate files/execute other programs, while still inside StarBug. Useful to create input files, move outputs and check results, without losing loaded StarBug files. To exit terminal mode, type `EXIT`, this will bring the user back into normal operation of StarBug.
 
+---
+
+`> clean`
+
+This will delete the contents of `./out/` . To clean all outputs from current directory. **CAREFUL!**
+
+---
+
+`> help`
+
+Prints basic help page.
+
+---
+
+`> exit`
+
+Exits the program.
 
 ## Image Reduction
 

@@ -1,7 +1,7 @@
 import os, sys
 sys.stdout.write('\x1b[s..loading..')
 sys.stdout.flush()
-import logging, argparse, readline
+import logging, argparse, readline, glob
 
 from src.fitsclass import FITS
 from src.alsclass import ALS_DATA
@@ -22,6 +22,7 @@ class StarBug:
                         'load': self.file_loadin,
                         'show': self.display_loaded,
                         'save': self.save,
+                        'delete': self.delete_group,
                         'clean': self.clean,
                         'terminal': self.terminal,
                         'help': self.manual,
@@ -70,6 +71,7 @@ class StarBug:
         print('\x1b[1;37mflatfield\x1b[0m: Divides fits group by loaded Flat group')
         print('\x1b[1;37mload\x1b[0m: Give list, or pathfile of fits fits to be loaded into program')
         print('\x1b[1;37mshow\x1b[0m: Display the currently loaded files')
+        print('\x1b[1;37mdelte\x1b[0m: Delete group from loaded files')
         print('\x1b[1;37msave\x1b[0m: Saves all files from selected load group')
         print('\x1b[1;37mclean\x1b[0m: Deletes out/ directory')
         print('\x1b[1;37mterminal\x1b[0m: Enter terminal mode')
@@ -77,9 +79,16 @@ class StarBug:
         print('\x1b[1;37mexit\x1b[0m: Leaves StarBug\n')
 
     def file_loadin(self):
-        inString = self.readin('Load Files [Single OR Comma Separated OR From File or Paths]\n>> ') 
-        try: inlist = [FITS(filename) for filename in inString.split(',')]
-        except: inlist = fitsfromtxt( inString )
+        inString = self.readin('Load Files [Single \x1b[1;37mOR\x1b[0m Space Separated \x1b[1;37mOR\x1b[0m *.fits globbed files \x1b[1;37mOR\x1b[0m From File or Paths]\n>> ') 
+        try:
+            inlist=[]
+            for FILES in inString.split(' '):
+                for filename in sorted(glob.glob(FILES)):
+                    inlist.append(FITS(filename))
+        #try: inlist = [FITS(filename) for filename in sorted(glob.glob(inString.split(' ')))] #single or space separated
+        except: 
+            inlist = fitsfromtxt( inString ) #path file
+
         self.fitslist[ self.readin('Name for group of files >> ') ] = inlist
 
 
@@ -87,6 +96,16 @@ class StarBug:
         print('\nLoaded Files')
         for item in self.fitslist:
             print(item +str(':') + str(self.fitslist[item] ) )
+
+    def delete_group(self):
+        #Deletes one of the loaded groups
+        group = self.readin('Delete Group Name >> ')
+        if group in self.fitslist.keys():
+            del self.fitslist[group]
+            logging.info('%s Deleted'%group)
+        else: logging.info('No group named %s'%group)
+        
+        
 
     def save(self):
         try: os.system('mkdir out')

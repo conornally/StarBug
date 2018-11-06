@@ -2,6 +2,7 @@ import os
 from fitsclass import FITS
 from fileio import *
 import numpy as np
+import logging
 from astropy.io import fits
 
 """
@@ -59,6 +60,7 @@ def darkFrame_subtract(fitslist, dark):
     """
     if type(dark)==list: dark = dark[0]
     for fits in fitslist:
+        logging.debug(fits)
         fits.subtract(dark)
 
 def flatField_divide(fitslist, flat):

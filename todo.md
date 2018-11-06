@@ -6,6 +6,7 @@ main file:
 > daophot wrap
 > psf build
 > prescience //or does this go into a file of its own 
+> image reduction
 
 alsclass.py:
 > need to make sure that if i was to do any python based photometry, it would be able to handle not being taken from a file
