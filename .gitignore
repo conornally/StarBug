@@ -1,4 +1,4 @@
 test/
 *.fits
 *.pyc
-*/tmp
+src/tmp

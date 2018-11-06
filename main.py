@@ -101,7 +101,9 @@ class StarBug:
         instring = self.readin(string)
         if instring in self.fitslist.keys():
             return self.fitslist[instring]
-        else: return []
+        else: 
+            print("%s Doesn't Exist"%instring)
+            return []
 
     def delete_group(self):
         #Deletes one of the loaded groups
