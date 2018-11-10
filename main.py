@@ -2,6 +2,7 @@ import os, sys
 sys.stdout.write('\x1b[s..loading..')
 sys.stdout.flush()
 import logging, argparse, readline, glob
+from guppy import hpy
 
 from src.fitsclass import FITS
 from src.alsclass import ALS_DATA
@@ -19,12 +20,14 @@ class StarBug:
                         'build_dark': self.build_dark,
                         'subtract_dark': self.darkframe_subtract,
                         'flatfielding': self.flatfield_divide,
+                        'stats': self.stats,
                         'load': self.file_loadin,
                         'show': self.display_loaded,
                         'save': self.save,
                         'delete': self.delete_group,
                         'clean': self.clean,
                         'terminal': self.terminal,
+                        'ram': self.RAM,
                         'help': self.manual,
                         'exit': self.exit}
         self.mainloop()
@@ -55,7 +58,12 @@ class StarBug:
         else: print('No flat field loaded')
 
     
-        
+    ##################
+    # Image Analysis #
+    ##################
+
+    def stats(self):
+        basic_stats( self.get_group(), float(self.readin('Sigma Clip >> ')), int(self.readin('Iterations >> ')))
 
 
     #############################
@@ -158,6 +166,10 @@ class StarBug:
                     return cmd
                 else:
                     state -= 1
+
+    def RAM(self):
+        h=hpy()
+        print(h.heap())
 
     def mainloop(self):
         print('\x1b[u\x1b[1;36mHello! Welcome to \x1b[1;32mStarBug\x1b[0m\n')

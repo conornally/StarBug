@@ -130,7 +130,7 @@ class FITS(object):
     def basic_stats(self, sigma, iters=3):
         logging.debug("%s Taking basic stats with sigma %f"%(self, sigma))
         self.mean, self.median, self.std = stats.sigma_clipped_stats( self.data, sigma=sigma, iters=iters )
-        logging.debug("%s: \nmean: %f\n std: %f\n min: %f\n max:%f"%(self, self.mean, self.std, np.min(self.data), np.max(self.data)))
+        logging.debug("%s: \n   Mean: %f\n Median: %f\n    Std: %f\n    Min: %f\n    Max: %f"%(self, self.mean, self.median, self.std, np.min(self.data), np.max(self.data)))
 
     
     def unit_scale(self):

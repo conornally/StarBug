@@ -21,7 +21,6 @@ def pre_adjustments( fitslist ):
     for fits in fitslist:
         fits.unit_scale()
         fits.crop()
-        fits.export("out/%s"%fits.name, overwrite=True)
 
 
 def darkFrame_build(darks):
@@ -72,6 +71,17 @@ def flatField_divide(fitslist, flat):
     for fits in fitslist:
         logging.debug(fits)
         fits.divide(flat)
+
+def basic_stats( fitslist, sigma=5, iters=3):
+    """INPUT: list or single fits instant
+                sigma clipping value
+                clipping iterations
+        Func:   Clips sigma value and returns mean, median stdev of fits image
+    """
+    if type(fitslist)==FITS: fitslist = [fitslist]
+    for fits in fitslist:
+        fits.basic_stats(sigma, iters)
+
 
 
 def save(f):
