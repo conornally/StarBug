@@ -83,7 +83,6 @@ def basic_stats( fitslist, sigma=5, iters=3):
         fits.basic_stats(sigma, iters)
 
 
-
 def save(f):
     """this is tmporary, ultimately it will overwrite itself"""
     hdu = fits.PrimaryHDU(data=f.data, header=f.header)

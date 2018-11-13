@@ -1,4 +1,5 @@
 import numpy as np, logging, time
+from scipy import optimize
 
 from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
 import astropy.units as u
@@ -23,6 +24,16 @@ class ALS_DATA(object):
         self.size = len(self.raw_data)
         self.sourcelist = np.empty((self.size), dtype=object)
         self.build_sourcelist()
+
+    def setup(self):
+        """
+        __init__ second round, without filenames
+        """
+        self.cat = np.zeros((len(self.sourcelist), 2))
+        for i,s in enumerate(self.sourcelist):
+            s.set_means()
+            self.cat[i]=[s.RA, s.DEC]
+        self.cat = SkyCoord( ra=Angle( self.cat[:,0], unit=u.deg), dec=Angle( self.cat[:,1], unit=u.deg) )
 
     def fromfile(self, filename, skipheader=3):
         try: return(np.genfromtxt(filename, skip_header=skipheader))
@@ -166,11 +177,41 @@ class ALS_DATA(object):
                     if d2d[i] == min(d2d[np.where( idx==IDX)]):
                         if regime=='epoch': self.sourcelist[i].append_Epoch(cat.sourcelist[IDX])
                         elif regime=='band': self.sourcelist[i].append_Band(cat.sourcelist[IDX])
-                else: self.sourcelist[i].quality=False
+                        self.sourcelist[i].quality= True
                 #If i dont crop out the bad sources i will NEED to append 9999 values to sourcelist objects..
             self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
             logging.info("Sources: %d"%len(self.sourcelist))
+
+    def single_match(self, cat):
+        return match_coordinates_sky(self.cat, cat)
+
+    def func(self, offsets, ALS=None):
+        offset = SkyCoord( ra=offsets[0]*np.ones((ALS.size))*u.deg, dec=offsets[1]*np.ones((ALS.size))*u.deg)
+        #tmpcat = SkyCoord( ra=Angle( [ra]*ALS.size, unit=u.deg), dec=Angle( [dec]*ALS.size, unit=u.deg))
+        #tmpcat.ra += ALS.cat.ra
+        
+        tmpcat = SkyCoord( ra=ALS.cat.ra+offset.ra, dec=ALS.cat.dec+offset.dec)
+        idx, d2d, d3d = self.single_match(tmpcat)
+        bad = np.where(d2d.arcsec > 1)[0]
+        badlen = len(bad)
+        for i, IDX in enumerate(idx):
+            if i not in bad:
+                if d2d[i] != min(d2d[np.where( idx==IDX)]):
+                    badlen+=1
+        print(offsets, self.size, badlen)
+        return(badlen)
+
+
+    def align(self, ALS):
+        """
+        will need to pull out all the star data into an array, otherwise scipy will take hours
+        match function will need to be v.fast
+        """
+        out =optimize.minimize( self.func, [0.0,0.0], args=ALS) 
+        print(out)
+        print(self.size - out['fun'])
+
 
 
 
@@ -182,11 +223,17 @@ class ALS_DATA(object):
 
 
 if __name__=='__main__':
+    import time
+    start = time.time()
     als = ALS_DATA('../test/test1.als', '../test/test1.fits' )
     als2 = ALS_DATA('../test/test2.als', '../test/test2.fits' )
-    als3 = ALS_DATA('../test/test3.als', '../test/test3.fits' )
+    als.setup()
+    als2.setup()
+    #als3 = ALS_DATA('../test/test3.als', '../test/test3.fits' )
     #als.combine(als1)
     #als.calibrate()
     #als.data_crop()
-    als.EpochMatch([als2, als3])
-    als.BandMatch(als)
+    #als.EpochMatch([als2, als3])
+    #als.BandMatch(als)
+    als.align(als2)
+    print(time.time()-start)

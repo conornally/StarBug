@@ -4,11 +4,11 @@ def load(config='../config'):
         return(c.readlines())
 
 
-def get_value(string, lines=False):
+def get_value(string, lines=False, dtype=str):
     if not lines: lines = load()
     for i in range(len(lines)):
         if string in lines[i]:
-            return(parse(lines[i]))
+            return(dtype(parse(lines[i])))
 
 
 

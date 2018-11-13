@@ -52,3 +52,12 @@ Band1 Min Sharp = -3.0
 Band1 Max Round = 1.5
 Band1 Min Round = -1.5
 
+#### Photometry ####
+FWHM = 20
+Threshold = 20
+Sigma = 3
+SharpHigh = 0.75
+SharpLow = 0.25
+RoundHigh = 1.0
+RoundLow = -1.0
+

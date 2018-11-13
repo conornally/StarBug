@@ -1,8 +1,9 @@
-import sys, logging
+import os, sys, logging
 import numpy as np
 import astropy.io.fits as fits
 import astropy.stats as stats
-import matplotlib.pyplot as plt
+import photutils
+import parse_config
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 
@@ -26,6 +27,42 @@ class FITS(object):
         self.median=0
         self.std=0
 
+        self.options={'fwhm':0,'threshold':0,'sigma':0,'roundness':[0,0],'sharpness':[0,0]}
+
+
+
+    #################################
+    # Source Detection and Analysis #
+    #################################
+
+    def find(self):
+        """InPUT:   
+            FUNC:   Daofind routine to do initial pass on source detection
+        """
+        if self.options['threshold'] ==0: logging.warning('Threshold at default: 0, Change this for source detection')
+        else:
+            print(self.options)
+            daofind = photutils.DAOStarFinder(  fwhm=self.options['fwhm'],
+                                                threshold=self.options['threshold'],
+                                                sharplo=self.options['sharpness'][0],
+                                                sharphi=self.options['sharpness'][1],
+                                                roundlo=self.options['roundness'][0],
+                                                roundhi=self.options['roundness'][1])
+            self.sourcelist = daofind(self.data)
+            #this needs to be fixed!
+            print(self.sourcelist)
+            self.sourcelist.remove_rows( np.where( self.sourcelist['flux'] < 50))
+            print(self.sourcelist)
+            with open('tmp.reg','w') as reg:
+                for line in self.sourcelist:
+                    reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
+
+
+
+
+    #############################
+    # Pixel Array Manipulations #
+    #############################
 
     def add(self, fitsobj):
         """
@@ -184,6 +221,27 @@ class FITS(object):
         self.data[np.where( self.data==0) ] = np.nan
 
 
+    #######################
+    # File I/O and config #
+    #######################
+    
+    def load_options(self):
+        """FUNC:loads in config file and stores options
+        """
+        
+        config = parse_config.load()
+        self.options['fwhm'] = parse_config.get_value('FWHM', config, dtype=float)
+        self.options['threshold'] = parse_config.get_value('Threshold', config, dtype=float)
+        self.options['sigma'] = parse_config.get_value('Sigma', config, dtype=float)
+        self.options['sharpness'] = [parse_config.get_value('SharpLow', config, dtype=float), parse_config.get_value('SharpHigh', config, dtype=float)]
+        self.options['roundness'] = [parse_config.get_value('RoundLow', config, dtype=float), parse_config.get_value('RoundHigh', config, dtype=float)]
+
+
+    def display(self):
+        try:
+            os.system('ds9 %s -regions tmp.reg -zoom to fit'%self.filename)
+        except: print('nope')
+
     def export(self, filename='', overwrite=False):
         if filename=='': 
            filename = self.filename
@@ -195,16 +253,22 @@ class FITS(object):
 
 
 if __name__=='__main__':
-    f1 = FITS("../test/raw1.fits")
+    f1 = FITS("../test/ngc869.fits")
+    f1.load_options()
+    f1.options['fwhm']=20
+    f1.options['threshold']=50
+    f1.options['sharpness']=[0.3,0.7]
+    f1.find()
+    f1.display()
     #f2 = FITS("../test/frame2.fits")
     #f3 = FITS("../test/frame3.fits")
     #fake=FITS("../test/frame1.fits")
     #fake.data = np.ones((2,2))
     #fake.name='FAKE'
     #f1.add_median([f2, f3, fake])
-    f1.unit_scale()
-    f1.zero_to_nan()
-    f1.normalise('median')
+    #f1.unit_scale()
+    #f1.zero_to_nan()
+    #f1.normalise('median')
     #f1.multiply(f2)
     #f1.divide(f2)
     #f1.basic_stats(300,1)

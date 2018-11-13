@@ -10,7 +10,7 @@ class Source(object):
         self.rnd= np.array([rnd])
 
         #self.set_means()
-        self.quality = True
+        self.quality = False
 
     def set_means(self):
         self.RA = np.nanmean( self.ra )
