@@ -60,6 +60,22 @@ class FITS(object):
                     reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
 
 
+    def get_offset(self, fitsobj):
+        """INPUT:   instance of FITS
+            FNUC:   gets pixel offset between fits objects
+        """
+        self.get_fft()
+        fitsobj.get_fft()
+        convolution = np.multiply(self.fft, np.conj(fitsobj.fft))
+        inverse = np.fft.ifft2(convolution)
+        print('argmax',np.argmax(inverse))
+        print('shape',np.shape(inverse))
+        print('argmax/shape0',np.argmax(inverse)/np.shape(self.data)[1])
+        print('argmax0',np.argmax(inverse, 0))
+
+
+    def get_fft(self):
+        self.fft = np.fft.fft2(self.data)
 
 
     #############################
@@ -269,13 +285,18 @@ class FITS(object):
 
 if __name__=='__main__':
     f1 = FITS("../test/ngc869.fits")
-    f1.load_options()
+    f2 = FITS("../test/ngc2.fits")
+    #f1.load_options()
     #f1.options['fwhm']=20
-    f1.options['threshold']=100
+    #f1.options['threshold']=100
     #f1.options['sharpness']=[0.3,0.7]
-    f1.convert_dtype('float32')
-    f1.find()
+    #f1.convert_dtype('float32')
+    #f1.find()
+    #f1.display()
+    #f1.get_offset(f2)
+    #f1.add(f2)
     f1.display()
+    f2.display()
     #f1.convert_dtype('float64')
     #f1.convert_dtype('float16')
     #f2 = FITS("../test/frame2.fits")
