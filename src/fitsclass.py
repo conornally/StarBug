@@ -15,7 +15,6 @@ class FITS(object):
         self.data = img[0].data
         self.size=np.shape(self.data)
         self.dtype = self.data.dtype
-        print(self.dtype)
         img.close()
 
         self.filename = filename
@@ -57,7 +56,8 @@ class FITS(object):
             print(self.sourcelist)
             with open('tmp.reg','w') as reg:
                 for line in self.sourcelist:
-                    reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
+                    #reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
+                    reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
 
 
 
@@ -230,6 +230,7 @@ class FITS(object):
         """
         if dtype in ['float16','float32','float64']:
             self.data = self.data.astype(dtype)
+            logging.debug('--> (%s) %s'%(dtype, self))
             
         else: logging.info('Unknown data type')
 
@@ -268,15 +269,15 @@ class FITS(object):
 
 if __name__=='__main__':
     f1 = FITS("../test/ngc869.fits")
-    #f1.load_options()
+    f1.load_options()
     #f1.options['fwhm']=20
-    #f1.options['threshold']=50
+    f1.options['threshold']=100
     #f1.options['sharpness']=[0.3,0.7]
-    #f1.find()
-    #f1.display()
     f1.convert_dtype('float32')
-    f1.convert_dtype('float64')
-    f1.convert_dtype('float16')
+    f1.find()
+    f1.display()
+    #f1.convert_dtype('float64')
+    #f1.convert_dtype('float16')
     #f2 = FITS("../test/frame2.fits")
     #f3 = FITS("../test/frame3.fits")
     #fake=FITS("../test/frame1.fits")

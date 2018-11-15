@@ -54,7 +54,7 @@ Band1 Min Round = -1.5
 
 #### Photometry ####
 FWHM = 20
-Threshold = 20
+Threshold = 80
 Sigma = 3
 SharpHigh = 0.75
 SharpLow = 0.25
