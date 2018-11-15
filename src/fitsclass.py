@@ -64,14 +64,19 @@ class FITS(object):
         """INPUT:   instance of FITS
             FNUC:   gets pixel offset between fits objects
         """
+        logging.info('Calculating alignment offset %s <-- %s'%(self, fitsobj))
         self.get_fft()
         fitsobj.get_fft()
-        convolution = np.multiply(self.fft, np.conj(fitsobj.fft))
+        convolution = np.multiply(np.conj(self.fft), fitsobj.fft)
         inverse = np.fft.ifft2(convolution)
-        print('argmax',np.argmax(inverse))
-        print('shape',np.shape(inverse))
-        print('argmax/shape0',np.argmax(inverse)/np.shape(self.data)[1])
-        print('argmax0',np.argmax(inverse, 0))
+        a = np.argmax(inverse)
+        r = len(self.data[0])
+        dx = a/r
+        dy = a%r
+        if dx >= 0.5*self.size[0]: dx = dx - self.size[0]
+        if dy >= 0.5*self.size[1]: dy = dy - self.size[1]
+        return(dx,dy)
+
 
 
     def get_fft(self):
@@ -81,6 +86,33 @@ class FITS(object):
     #############################
     # Pixel Array Manipulations #
     #############################
+
+    def add_with_offset(self, fitsobj, offset=(0,0)):
+
+        l0,l1 = self.size
+        print(offset)
+        print(l0,l1, 'original size')
+        if l0 < fitsobj.size[0]+ abs(offset[0]): l0 += abs(offset[0])
+        if l1 < fitsobj.size[1]+ abs(offset[1]): l1 += abs(offset[1])
+        print(l0,l1)
+        if offset[0] > 0: 
+            x0=0
+            x1 = offset[0]
+
+        else: x0 = abs(offset[0])
+        if offset[1] > 0: 
+            y0=0
+            y1 = offset[1]
+        else: y0 = abs(offset[1])
+
+        print(x0,y0)
+        nullarr = np.zeros((l0,l1))
+        nullarr[ x0:x0+self.size[0], y0:y0+self.size[1] ] += self.data
+        self.data = nullarr
+        print(self.data)
+
+        
+
 
     def add(self, fitsobj):
         """
@@ -270,7 +302,7 @@ class FITS(object):
 
     def display(self):
         try:
-            os.system('ds9 %s -regions tmp.reg -zoom to fit'%self.filename)
+            os.system('ds9 %s -regions tmp.reg -zoom to fit &'%self.filename)
         except: print('nope')
 
     def export(self, filename='', overwrite=False):
@@ -284,8 +316,27 @@ class FITS(object):
 
 
 if __name__=='__main__':
-    f1 = FITS("../test/ngc869.fits")
-    f2 = FITS("../test/ngc2.fits")
+    #f1 = FITS("../test/ngc869.fits")
+    #f2 = FITS("../test/ngc2.fits")
+    f1 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_001.fits')
+    f2 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_002.fits')
+    #f1 = FITS('../test/test1.fits')
+    #f2 = FITS('../test/test2.fits')
+    #f3 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_003.fits')
+    #f4 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_004.fits')
+    #f5 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_005.fits')
+    #f6 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_006.fits')
+    #f7 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_007.fits')
+    #f8 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_008.fits')
+    #f1.add(f2)
+    #f1.add(f3)
+    #f1.add(f4)
+    #f1.add(f5)
+    #f1.add(f6)
+    #f1.add(f7)
+    #f1.add(f8)
+    #f1.export('tmp.fits', True) 
+    #os.system('ds9 tmp.fits')
     #f1.load_options()
     #f1.options['fwhm']=20
     #f1.options['threshold']=100
@@ -293,10 +344,9 @@ if __name__=='__main__':
     #f1.convert_dtype('float32')
     #f1.find()
     #f1.display()
-    #f1.get_offset(f2)
+    f1.get_offset(f2)
+    #f1.add_with_offset(f2, (2,-3))
     #f1.add(f2)
-    f1.display()
-    f2.display()
     #f1.convert_dtype('float64')
     #f1.convert_dtype('float16')
     #f2 = FITS("../test/frame2.fits")
@@ -313,4 +363,3 @@ if __name__=='__main__':
     #f1.basic_stats(300,1)
     #f1.crop()
     # f1.scale()
-    #f1.export('tmp.fits', True) 
