@@ -208,9 +208,14 @@ class ALS_DATA(object):
         will need to pull out all the star data into an array, otherwise scipy will take hours
         match function will need to be v.fast
         """
-        out =optimize.minimize( self.func, [0.0,0.0], args=ALS) 
+        #out =optimize.minimize( self.func, [0.0,0.0], args=ALS) 
+        ra = self.fits.header['CRVAL1']
+        dec = self.fits.header['CRVAL2']
+        print(ra,dec)
+        perc=0.0001
+        out = optimize.brute( self.func, [[ra-perc*ra, ra+perc*ra], [dec-perc*dec, dec+perc*dec]], args=[ALS])
         print(out)
-        print(self.size - out['fun'])
+        # print(self.size - out['fun'])
 
 
 

@@ -14,6 +14,8 @@ class FITS(object):
         self.header = img[0].header
         self.data = img[0].data
         self.size=np.shape(self.data)
+        self.dtype = self.data.dtype
+        print(self.dtype)
         img.close()
 
         self.filename = filename
@@ -94,16 +96,18 @@ class FITS(object):
         FUNC: multiplies self.data by fitsobj.data (element-wise)
         """
         if type(factor) == FITS:
-            self.data = np.multiply(self.data, fitsobj.data, dtype='float64')
-        else: self.data = np.multiply(self.data, factor, dtype='float64')
+            self.data = np.multiply(self.data, fitsobj.data, dtype=self.data.dtype)
+        else: self.data = np.multiply(self.data, factor, dtype=self.data.dtype)
 
     def divide(self, factor):
         """
         FUNC: divide self.data by fitsobj.data (element-wise)
+        
         """
+        logging.info('IMPORTANT, THIS MIGHT HAVE CAUSED ROUNDING!!')
         if type(factor) == FITS:
-            self.data = np.divide(self.data, factor.data, dtype='float64')
-        else: self.data = np.divide(self.data, factor, dtype='float64')
+            self.data = np.divide(self.data, factor.data, dtype=float)
+        else: self.data = np.divide(self.data, factor, dtype=float)
 
     def add_mean(self, fitsobj):
         """
@@ -155,7 +159,7 @@ class FITS(object):
         logging.info("\x1b[1;33mNORMALISING\x1b[0m: %s"%self)
         if scale=='max': factor = np.nanmax(self.data)
         elif scale=='median': factor = np.nanmedian(self.data)
-        self.data = np.divide(self.data, factor, dtype=np.float64)
+        self.data = np.divide(self.data, factor, dtype=self.data.dtype)
 
     def sigma_clip(self, sigma):
         """
@@ -220,6 +224,16 @@ class FITS(object):
         """ FUNC: Converts 0 in data to np.nan""" 
         self.data[np.where( self.data==0) ] = np.nan
 
+    def convert_dtype(self, dtype='float32'):
+        """INPUT:   dtype, data type to convert self.data to
+            FUNC:   changes data type of pixel array
+        """
+        if dtype in ['float16','float32','float64']:
+            self.data = self.data.astype(dtype)
+            
+        else: logging.info('Unknown data type')
+
+
 
     #######################
     # File I/O and config #
@@ -254,12 +268,15 @@ class FITS(object):
 
 if __name__=='__main__':
     f1 = FITS("../test/ngc869.fits")
-    f1.load_options()
-    f1.options['fwhm']=20
-    f1.options['threshold']=50
-    f1.options['sharpness']=[0.3,0.7]
-    f1.find()
-    f1.display()
+    #f1.load_options()
+    #f1.options['fwhm']=20
+    #f1.options['threshold']=50
+    #f1.options['sharpness']=[0.3,0.7]
+    #f1.find()
+    #f1.display()
+    f1.convert_dtype('float32')
+    f1.convert_dtype('float64')
+    f1.convert_dtype('float16')
     #f2 = FITS("../test/frame2.fits")
     #f3 = FITS("../test/frame3.fits")
     #fake=FITS("../test/frame1.fits")

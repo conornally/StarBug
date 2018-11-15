@@ -82,6 +82,12 @@ def basic_stats( fitslist, sigma=5, iters=3):
     for fits in fitslist:
         fits.basic_stats(sigma, iters)
 
+def dtype_convert(fitslist, dtype='float32'):
+    if type(fitslist)==FITS: fitslist=[fitslist]
+    for fits in fitslist:
+        fits.convert_dtype(dtype)
+
+
 
 def save(f):
     """this is tmporary, ultimately it will overwrite itself"""

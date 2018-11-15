@@ -79,4 +79,14 @@ Prompts loaded group name, and will iterate through group, subtracting the *Dark
 
 Prompts loaded group name, will iterate through group and divide the *Flat* preload from each. If no *Flat* loaded, the, the regime will not be conducted.
 
+## Analysis
 
+`> stats`
+
+Prompts user for loaded group, sigma clip value, iterations. Prints basic stats for each image in group.
+
+## Array Manipulation
+
+`> dtype`
+
+Prompts loaded group name, new data type. Converts the fits pixel array to that data type. Currently accepts: *float32 float64* . 
