@@ -20,7 +20,8 @@ class StarBug:
                         'build_dark': self.build_dark,
                         'subtract_dark': self.darkframe_subtract,
                         'flatfielding': self.flatfield_divide,
-                        'calc_offset': self.calculate_offset,
+                        'align': self.calculate_offset,
+                        'stack': self.stack,
                         # analysis
                         'stats': self.stats,
                         # array manipulations
@@ -64,7 +65,14 @@ class StarBug:
         else: print('No flat field loaded')
 
     def calculate_offset(self):
-        pass
+        align( self.get_group() )
+
+    def stack(self):
+        fitslist = self.get_group()
+        if len(fitslist) >=2:
+            fitslist[0].stack( fitslist[1:])
+            fitslist[0].export('tmp.fits', overwrite=True)
+        
 
     
     ##################

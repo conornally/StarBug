@@ -29,6 +29,7 @@ class FITS(object):
         self.std=0
 
         self.options={'fwhm':0,'threshold':0,'sigma':0,'roundness':[0,0],'sharpness':[0,0]}
+        self.offset=np.zeros((2))
 
 
 
@@ -60,14 +61,15 @@ class FITS(object):
                     reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
 
 
-    def get_offset(self, fitsobj):
+    def get_offset(self, fitsobj, calcFFTs=False):
         """INPUT:   instance of FITS
             FNUC:   gets pixel offset between fits objects
         """
         logging.info('Calculating alignment offset %s <-- %s'%(self, fitsobj))
-        self.get_fft()
-        fitsobj.get_fft()
-        convolution = np.multiply(np.conj(self.fft), fitsobj.fft)
+        if calcFFTs:
+            self.get_fft()
+            fitsobj.get_fft()
+        convolution = np.multiply(self.fft, np.conj(fitsobj.fft))
         inverse = np.fft.ifft2(convolution)
         a = np.argmax(inverse)
         r = len(self.data[0])
@@ -81,11 +83,16 @@ class FITS(object):
 
     def get_fft(self):
         self.fft = np.fft.fft2(self.data)
+    def del_fft(self):
+        if hasttr(self, 'fft'): delattr(self, 'fft')
 
 
     #############################
     # Pixel Array Manipulations #
     #############################
+
+    
+
 
     def add_with_offset(self, fitsobj, offset=(0,0)):
 
@@ -112,6 +119,43 @@ class FITS(object):
         print(self.data)
 
         
+    def stack(self, fitslist, crop=False):
+        """INPUT:  list/single FITS instance
+                   (,2) array of offset values
+            FUNC:   stacks fits arrays on top of each other based on offset
+            1: get buffer
+            2: loop over, adding images with offset
+        """
+        if type(fitslist) == FITS: fitslist = [fitslist]
+        offset = np.array([f.offset for f in fitslist])
+        xmin,xmax = int(np.min(offset[:,0])), int(np.max(offset[:,0]))
+        ymin,ymax = int(np.min(offset[:,1])), int(np.max(offset[:,1]))
+        xmin = xmin if xmin <=0 else 0
+        ymin = ymin if ymin <=0 else 0
+        xmax = xmax if xmax >0 else 0
+        ymax = ymax if ymax >0 else 0
+        print(xmin,xmax,ymin,ymax)
+
+        nullarr = np.zeros(( abs(xmin)+abs(xmax)+ self.size[0], abs(ymin)+abs(ymax)+self.size[1]))
+        ref = ( abs(xmin), abs(ymin) )
+        nullarr[ref[0]:ref[0]+self.size[0], ref[1]:ref[1]+self.size[1]] += self.data
+        self.data=nullarr
+        for i, f in enumerate(fitslist):
+            logging.debug('\x1b[1;33mStacking\x1b[0m %s (%s) --> %s'%(f, offset[i], self))
+            x0, y0 = int(ref[0]+offset[i,0]) , int(ref[1]+offset[i,1])
+            self.data[ x0: x0+f.size[0], y0:y0+f.size[1]]+= f.data
+
+        if crop:#hmmmm
+            x0 = xmax + ref[0]
+            x1 = f.data.shape[0]
+            y0 = ymax + ref[1]
+            y1 = f.data.shape[1]
+            print(x0,x1,y0,y1)
+            print(self.data.shape)
+            self.data = self.data[x0:x1, y0:y1]
+            print(self.data.shape)
+
+
 
 
     def add(self, fitsobj):
@@ -300,9 +344,10 @@ class FITS(object):
         self.options['roundness'] = [parse_config.get_value('RoundLow', config, dtype=float), parse_config.get_value('RoundHigh', config, dtype=float)]
 
 
-    def display(self):
+    def display(self, filename=''):
+        if not filename: filename=self.filename
         try:
-            os.system('ds9 %s -regions tmp.reg -zoom to fit &'%self.filename)
+            os.system('ds9 %s -regions tmp.reg -zoom to fit &'%filename)
         except: print('nope')
 
     def export(self, filename='', overwrite=False):
@@ -318,8 +363,9 @@ class FITS(object):
 if __name__=='__main__':
     #f1 = FITS("../test/ngc869.fits")
     #f2 = FITS("../test/ngc2.fits")
-    f1 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_001.fits')
-    f2 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_002.fits')
+    f1 = FITS('/home/conor/science/StarClusters2/middle/out/sean_g_10s_tile_001.fits')
+    f2 = FITS('/home/conor/science/StarClusters2/middle/out/sean_g_10s_tile_002.fits')
+    f3 = FITS('/home/conor/science/StarClusters2/middle/out/sean_g_10s_tile_003.fits')
     #f1 = FITS('../test/test1.fits')
     #f2 = FITS('../test/test2.fits')
     #f3 = FITS('/home/conor/science/StarClusters2/ngc884/out/ngc_884_g_10s_003.fits')
@@ -335,7 +381,6 @@ if __name__=='__main__':
     #f1.add(f6)
     #f1.add(f7)
     #f1.add(f8)
-    #f1.export('tmp.fits', True) 
     #os.system('ds9 tmp.fits')
     #f1.load_options()
     #f1.options['fwhm']=20
@@ -344,7 +389,12 @@ if __name__=='__main__':
     #f1.convert_dtype('float32')
     #f1.find()
     #f1.display()
-    f1.get_offset(f2)
+    #print(f1.get_offset(f2, calcFFTs=True))
+    f2.offset=np.array([1500,-1100])
+    f3.offset=np.array([-100,1500])
+    f1.stack([f2,f3], crop=False)
+    f1.export('tmp.fits', True) 
+    f1.display('tmp.fits')
     #f1.add_with_offset(f2, (2,-3))
     #f1.add(f2)
     #f1.convert_dtype('float64')

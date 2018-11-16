@@ -5,12 +5,9 @@ import numpy as np
 import logging
 from astropy.io import fits
 
-"""
-dark frame reduction
->> need to stack multple frames of this together
-flat field multiplication
->> need to stack multple frames of this together
-"""
+###################
+# Image Reduction #
+###################
 
 def pre_adjustments( fitslist ):
     """
@@ -72,6 +69,26 @@ def flatField_divide(fitslist, flat):
         logging.debug(fits)
         fits.divide(flat)
 
+def align(fitslist):
+    fitslist[0].get_fft()
+    for i,fits in enumerate(fitslist[1:], start=1):
+        fits.get_fft()
+        fits.offset = fitslist[i-1].get_offset(fits) + fitslist[i-1].offset
+        logging.info('%s offset %s'%(fits, fits.offset))
+        if i >=2: fitslist[i-2].del_fft()
+        
+
+
+#######################
+# Array Manipulations #
+#######################
+
+
+
+############
+# Analysis #
+############
+
 def basic_stats( fitslist, sigma=5, iters=3):
     """INPUT: list or single fits instant
                 sigma clipping value
@@ -81,6 +98,11 @@ def basic_stats( fitslist, sigma=5, iters=3):
     if type(fitslist)==FITS: fitslist = [fitslist]
     for fits in fitslist:
         fits.basic_stats(sigma, iters)
+
+
+###########
+# File io #
+###########
 
 def dtype_convert(fitslist, dtype='float32'):
     if type(fitslist)==FITS: fitslist=[fitslist]
@@ -95,12 +117,8 @@ def save(f):
     hdu.writeto('tmp.fits', overwrite=True)
 
 if __name__=='__main__':
-    #pre_adjustments( fitsfromtxt('test/files.txt'))
-    f1 = FITS('../test/flat1.fits')
-    f2 = FITS('../test/flat2.fits')
-    f3 = FITS('../test/flat3.fits')
-    flatFrame_build([f1,f2, f3])
+    f1 = FITS('../test/frame1.fits')
+    f2 = FITS('../test/frame2.fits')
+    f3 = FITS('../test/frame3.fits')
+    align([f1,f2, f3])
     
-    frame1=FITS('../test/frame1.fits')
-    frame1.divide(f1)
-    save(frame1)
