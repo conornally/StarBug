@@ -101,12 +101,20 @@ class StarBug:
                     
         print('\nHelp Page:\n----------')
         print('\x1b[1;37mTEMPLATE\x1b[0m: Here is some words')
+
+        print('\x1b[4;37m\nImage Reduction\x1b[0m')
         print('\x1b[1;37mpre_adjust\x1b[0m: Adjustments to fits file before data reduction')
         print('\x1b[1;37mbuild_flat\x1b[0m: Build flat field frame from list of raw flats and a dark frame')
         print('\x1b[1;37mbuild_dark\x1b[0m: Build dark frame from list of dark fields')
         print('\x1b[1;37msubtract_dark\x1b[0m: Subtracts Dark frame (group) from fits group')
         print('\x1b[1;37mflatfield\x1b[0m: Divides fits group by loaded Flat group')
+        print('\x1b[1;37malign\x1b[0m: Get alignment offsets from reference image')
+        print('\x1b[1;37mstack\x1b[0m: Stacks images based on alignment offset')
+
+        print('\x1b[4;37m\nANALYSIS\x1b[0m')
         print('\x1b[1;37mstats\x1b[0m: Get sigma clipped stats of arrays')
+
+        print('\x1b[4;37m\nBASIC I/O\x1b[0m')
         print('\x1b[1;37mdtype\x1b[0m: Change data type of pixel arrays')
         print('\x1b[1;37mload\x1b[0m: Give list, or pathfile of fits fits to be loaded into program')
         print('\x1b[1;37mshow\x1b[0m: Display the currently loaded files')
