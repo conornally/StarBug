@@ -21,6 +21,9 @@ The next *input* is group name; this represents the name for the list (or single
 This can be called to view the list of loaded files, and the name under which they are stored.
 
 ---
+`> move`
+`> d`
+
 
 `> save`
 
@@ -76,7 +79,7 @@ Prompts loaded group name, will iterate through group and divide the *Flat* prel
 
 `> align`
 
-`> stack'
+`> stack`
 
 ## Analysis
 
@@ -84,8 +87,11 @@ Prompts loaded group name, will iterate through group and divide the *Flat* prel
 
 Prompts user for loaded group, sigma clip value, iterations. Prints basic stats for each image in group.
 
-## Array Manipulation
+## File Manipulation
 
 `> dtype`
 
 Prompts loaded group name, new data type. Converts the fits pixel array to that data type. Currently accepts: *float32 float64* . 
+
+`> header`
+`> update_header`

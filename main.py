@@ -24,11 +24,15 @@ class StarBug:
                         'stack': self.stack,
                         # analysis
                         'stats': self.stats,
-                        # array manipulations
+                        # file manipulations
+                        'update_header': self.update_header,
                         'dtype': self.convert_dtype,
                         # io
                         'load': self.file_loadin,
                         'show': self.display_loaded,
+                        'header': self.display_header,
+                        'd': self.delete,
+                        'move': self.move,
                         'save': self.save,
                         'delete': self.delete_group,
                         'clean': self.clean,
@@ -70,7 +74,7 @@ class StarBug:
     def stack(self):
         fitslist = self.get_group()
         if len(fitslist) >=2:
-            fitslist[0].stack( fitslist[1:])
+            fitslist[0].stack( fitslist[1:], crop=True)
             fitslist[0].export('tmp.fits', overwrite=True)
         
 
@@ -84,14 +88,28 @@ class StarBug:
 
 
 
-    #############################
-    # Pixel Array Manipulations #
-    #############################
+    ######################
+    # File Manipulations #
+    ######################
 
     def convert_dtype(self):
         """Converts data type of fits pixel arrays
         """
         dtype_convert( self.get_group(), self.readin('New Data Type >> '))
+
+    def update_header(self):
+        """
+        """
+        group = self.get_group()
+        key = self.readin('Header Key >> ')
+        if key in group[0].header:
+            print('%s: %s'%(key, group[0].header[key]))
+            value = self.readin('Value >> ')
+            for f in group:
+                f.header[key] = value
+                logging.debug('%s'%(f))
+        else: print('No key %s'%key)
+
 
 
     #############################
@@ -116,10 +134,14 @@ class StarBug:
 
         print('\x1b[4;37m\nBASIC I/O\x1b[0m')
         print('\x1b[1;37mdtype\x1b[0m: Change data type of pixel arrays')
+        print('\x1b[1;37mheader\x1b[0m: Display header files')
+        print('\x1b[1;37mupdate_header\x1b[0m: Change value in header files')
         print('\x1b[1;37mload\x1b[0m: Give list, or pathfile of fits fits to be loaded into program')
         print('\x1b[1;37mshow\x1b[0m: Display the currently loaded files')
         print('\x1b[1;37mdelte\x1b[0m: Delete group from loaded files')
         print('\x1b[1;37msave\x1b[0m: Saves all files from selected load group')
+        print('\x1b[1;37mmove\x1b[0m: Move fits between loaded groups')
+        print('\x1b[1;37md\x1b[0m: Delete fits from loaded groups')
         print('\x1b[1;37mclean\x1b[0m: Deletes out/ directory')
         print('\x1b[1;37mterminal\x1b[0m: Enter terminal mode')
         print('\x1b[1;37mhelp\x1b[0m: Prints this page')
@@ -144,13 +166,21 @@ class StarBug:
         for item in self.fitslist:
             print(item +str(':') + str(self.fitslist[item] ) )
 
-    def get_group(self, string='Name of Loaded Group >> '):
+    def display_header(self):
+        for f in self.get_group():
+            print(f)
+            print(repr(f.header))
+
+    def get_group(self, string='Name of loaded group >> '):
         instring = self.readin(string)
         if instring in self.fitslist.keys():
             return self.fitslist[instring]
         else: 
-            print("%s Doesn't Exist"%instring)
-            return []
+            print("Group %s doesn't exist"%instring)
+            if self.readin('Create %s y/n: '%instring)=='y': 
+                self.fitslist[instring]=[]
+                return self.fitslist[instring]
+        return []
 
     def delete_group(self):
         #Deletes one of the loaded groups
@@ -159,8 +189,36 @@ class StarBug:
             del self.fitslist[group]
             logging.info('%s Deleted'%group)
         else: logging.info('No group named %s'%group)
-        
-        
+
+    def yank(self):
+        pass
+
+    def move(self):
+        group = self.get_group()
+        selected = self.single_select(group)
+        new_group = self.get_group('Move to >> ')
+        print(new_group)
+        i = int(self.readin('Insert to index >> '))
+        if i <= len(new_group) and i >=0:
+            new_group.insert(i, selected)
+            group.pop(group.index(selected))
+        else: print('Cannae dae that')
+
+
+    def delete(self):
+        group = self.get_group() 
+        selected = self.single_select(group)
+        if self.readin('Delete %s y/n: '%selected) == 'y': group.pop( group.index(selected))
+        print(group)
+
+    def single_select(self, group):
+        for i,f in enumerate(group): print('%d: %s'%(i,f))
+        i = int(self.readin('Select Index >> '))
+        try: return(group[i])
+        except: return None
+
+
+
 
     def save(self):
         if not os.path.isdir('out'): os.system('mkdir out')

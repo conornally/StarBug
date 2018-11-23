@@ -84,7 +84,7 @@ class FITS(object):
     def get_fft(self):
         self.fft = np.fft.fft2(self.data)
     def del_fft(self):
-        if hasttr(self, 'fft'): delattr(self, 'fft')
+        if hasattr(self, 'fft'): delattr(self, 'fft')
 
 
     #############################
@@ -119,7 +119,7 @@ class FITS(object):
         print(self.data)
 
         
-    def stack(self, fitslist, crop=False):
+    def stack(self, fitslist, crop=True, update_header=False):
         """INPUT:  list/single FITS instance
                    (,2) array of offset values
             FUNC:   stacks fits arrays on top of each other based on offset
@@ -134,7 +134,6 @@ class FITS(object):
         ymin = ymin if ymin <=0 else 0
         xmax = xmax if xmax >0 else 0
         ymax = ymax if ymax >0 else 0
-        print(xmin,xmax,ymin,ymax)
 
         nullarr = np.zeros(( abs(xmin)+abs(xmax)+ self.size[0], abs(ymin)+abs(ymax)+self.size[1]))
         ref = ( abs(xmin), abs(ymin) )
@@ -144,16 +143,14 @@ class FITS(object):
             logging.debug('\x1b[1;33mStacking\x1b[0m %s (%s) --> %s'%(f, offset[i], self))
             x0, y0 = int(ref[0]+offset[i,0]) , int(ref[1]+offset[i,1])
             self.data[ x0: x0+f.size[0], y0:y0+f.size[1]]+= f.data
+            if update_header: self.header['EXPTIME'] += f.header['EXPTIME']
 
         if crop:#hmmmm
             x0 = xmax + ref[0]
             x1 = f.data.shape[0]
             y0 = ymax + ref[1]
             y1 = f.data.shape[1]
-            print(x0,x1,y0,y1)
-            print(self.data.shape)
             self.data = self.data[x0:x1, y0:y1]
-            print(self.data.shape)
 
 
 
@@ -392,9 +389,8 @@ if __name__=='__main__':
     #print(f1.get_offset(f2, calcFFTs=True))
     f2.offset=np.array([1500,-1100])
     f3.offset=np.array([-100,1500])
-    f1.stack([f2,f3], crop=False)
-    f1.export('tmp.fits', True) 
-    f1.display('tmp.fits')
+    f1.stack([f2,f3], crop=False, update_header=True)
+    print(f1.header['EXPTIME'])
     #f1.add_with_offset(f2, (2,-3))
     #f1.add(f2)
     #f1.convert_dtype('float64')
