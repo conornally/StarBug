@@ -5,6 +5,11 @@ work on todo list
 main file:
 > daophot wrap
 > psf build
+> more group interaction
+>> done d, move
+
+fitsclass.py
+> shift file i/o
 
 alsclass.py:
 > need to make sure that if i was to do any python based photometry, it would be able to handle not being taken from a file

@@ -21,6 +21,9 @@ The next *input* is group name; this represents the name for the list (or single
 This can be called to view the list of loaded files, and the name under which they are stored.
 
 ---
+`> move`
+`> d`
+
 
 `> save`
 
@@ -76,7 +79,16 @@ Prompts loaded group name, will iterate through group and divide the *Flat* prel
 
 `> align`
 
-`> stack'
+Calculates the offset between fits images in loaded group
+
+`> exportoffset`
+
+//DEBUGGING PURPOSES
+Prompts for filename (if nothing supplied, subtracts .fits off first fitsimage of loaded group as filename), and saves their offsets into file
+
+`> stack`
+
+Prompts offset filename (if nothing supplied, uses offsets stored in loaded group). Function stacks together the images based on their offsets, and crops the resulting data around non-fully fullfilled areas.
 
 ## Analysis
 
@@ -84,8 +96,16 @@ Prompts loaded group name, will iterate through group and divide the *Flat* prel
 
 Prompts user for loaded group, sigma clip value, iterations. Prints basic stats for each image in group.
 
-## Array Manipulation
+## File Manipulation
 
 `> dtype`
 
 Prompts loaded group name, new data type. Converts the fits pixel array to that data type. Currently accepts: *float32 float64* . 
+
+`> header`
+
+Displays header files of each fits image in loaded group
+
+`> update_header`
+
+Prompts loaded group to work on, and header element to alter. Then reads in new value. Loaded group must be saved for change to take effect.

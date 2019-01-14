@@ -6,11 +6,34 @@ import astropy.units as u
 from astropy import wcs
 
 from sourceclass import Source
-from fitsclass import FITS
+#from fitsclass import FITS
 from parse_config import *
 
 class ALS_DATA(object):
-    def __init__(self, alsfile='', fitsfile=''):
+    def __init__(self, allstar=None, sources=None,fitsfile=None):
+        """
+        INPUT:  alsfile - daophot *allstar* output
+                sources - photutils.DAOStarFinder table out
+                fitsfile- fits filename
+        """
+        #Source(self, ra=0, dec=0, mag=0, magerr=0, shp=0, rnd=0): ##there will be flux in here soon
+        if sources: 
+            self.sourcelist = np.empty((len(sources)), dtype=object)
+            for i, line in enumerate(sources):
+                self.sourcelist[i] = Source(line['xcentroid'], line['ycentroid'], line['mag'], 0, line['sharpness'], line['roundness1'])
+
+        elif allstar:
+            pass
+        if fitsfile:
+            pass
+
+
+
+
+
+
+
+        """
         self.raw_data = self.fromfile( alsfile )
 
         self.name = alsfile
@@ -24,6 +47,7 @@ class ALS_DATA(object):
         self.size = len(self.raw_data)
         self.sourcelist = np.empty((self.size), dtype=object)
         self.build_sourcelist()
+        """
 
     def setup(self):
         """

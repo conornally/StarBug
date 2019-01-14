@@ -4,6 +4,7 @@ import astropy.io.fits as fits
 import astropy.stats as stats
 import photutils
 import parse_config
+from alsclass import ALS_DATA
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 
@@ -36,8 +37,31 @@ class FITS(object):
     #################################
     # Source Detection and Analysis #
     #################################
+    def find(self, options={}):
+        """InPUT:   options is a dictionary of config settings
+            FUNC:   Daofind routine to do initial pass on source detection
+            // add in all the options
+        """
+        if options: self.load_options(options)
+        daofind = photutils.DAOStarFinder(  fwhm=self.options['fwhm'],
+                                            threshold=self.options['threshold'],
+                                            sharplo=self.options['sharpness'][0],
+                                            sharphi=self.options['sharpness'][1],
+                                            roundlo=self.options['roundness'][0],
+                                            roundhi=self.options['roundness'][1])
+        sources = daofind(self.data)
+        sources.remove_rows( np.where( sources['flux'] < 50))
+        print(sources)
+        
+        with open('tmp.reg','w') as reg:
+            for line in sources:
+                reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
+                #reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
+        #self.catalog = ALS_DATA(sources=sources)
 
-    def find(self):
+
+
+    def xfind(self):
         """InPUT:   
             FUNC:   Daofind routine to do initial pass on source detection
         """
@@ -119,7 +143,7 @@ class FITS(object):
         print(self.data)
 
         
-    def stack(self, fitslist, crop=False):
+    def stack(self, fitslist, crop=True, update_header=False):
         """INPUT:  list/single FITS instance
                    (,2) array of offset values
             FUNC:   stacks fits arrays on top of each other based on offset
@@ -134,7 +158,6 @@ class FITS(object):
         ymin = ymin if ymin <=0 else 0
         xmax = xmax if xmax >0 else 0
         ymax = ymax if ymax >0 else 0
-        print(xmin,xmax,ymin,ymax)
 
         nullarr = np.zeros(( abs(xmin)+abs(xmax)+ self.size[0], abs(ymin)+abs(ymax)+self.size[1]))
         ref = ( abs(xmin), abs(ymin) )
@@ -144,16 +167,14 @@ class FITS(object):
             logging.debug('\x1b[1;33mStacking\x1b[0m %s (%s) --> %s'%(f, offset[i], self))
             x0, y0 = int(ref[0]+offset[i,0]) , int(ref[1]+offset[i,1])
             self.data[ x0: x0+f.size[0], y0:y0+f.size[1]]+= f.data
+            if update_header: self.header['EXPTIME'] += f.header['EXPTIME']
 
         if crop:#hmmmm
             x0 = xmax + ref[0]
             x1 = f.data.shape[0]
             y0 = ymax + ref[1]
             y1 = f.data.shape[1]
-            print(x0,x1,y0,y1)
-            print(self.data.shape)
             self.data = self.data[x0:x1, y0:y1]
-            print(self.data.shape)
 
 
 
@@ -326,22 +347,24 @@ class FITS(object):
             
         else: logging.info('Unknown data type')
 
+    
+    def scale(self, a=2):
+        self.data = np.power(self.data, a)
+
+
 
 
     #######################
     # File I/O and config #
     #######################
     
-    def load_options(self):
-        """FUNC:loads in config file and stores options
-        """
-        
-        config = parse_config.load()
-        self.options['fwhm'] = parse_config.get_value('FWHM', config, dtype=float)
-        self.options['threshold'] = parse_config.get_value('Threshold', config, dtype=float)
-        self.options['sigma'] = parse_config.get_value('Sigma', config, dtype=float)
-        self.options['sharpness'] = [parse_config.get_value('SharpLow', config, dtype=float), parse_config.get_value('SharpHigh', config, dtype=float)]
-        self.options['roundness'] = [parse_config.get_value('RoundLow', config, dtype=float), parse_config.get_value('RoundHigh', config, dtype=float)]
+
+    def load_options(self, options):
+        self.options['fwhm'] = options['FWHM']
+        self.options['threshold'] = options['Threshold']
+        self.options['sigma'] = options['Sigma']
+        self.options['sharpness'] = [options['SharpLow'], options['SharpHigh']]
+        self.options['roundness'] = [options['RoundLow'], options['RoundHigh']]
 
 
     def display(self, filename=''):
@@ -355,7 +378,7 @@ class FITS(object):
            filename = self.filename
         logging.info('\x1b[1;33mEXPORTING\x1b[0m: %s --> %s'%(self, filename))
         fits.PrimaryHDU(data=self.data, header=self.header).writeto(filename, overwrite=overwrite)
-        
+
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
 
@@ -392,9 +415,8 @@ if __name__=='__main__':
     #print(f1.get_offset(f2, calcFFTs=True))
     f2.offset=np.array([1500,-1100])
     f3.offset=np.array([-100,1500])
-    f1.stack([f2,f3], crop=False)
-    f1.export('tmp.fits', True) 
-    f1.display('tmp.fits')
+    f1.stack([f2,f3], crop=False, update_header=True)
+    print(f1.header['EXPTIME'])
     #f1.add_with_offset(f2, (2,-3))
     #f1.add(f2)
     #f1.convert_dtype('float64')
