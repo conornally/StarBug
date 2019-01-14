@@ -84,7 +84,7 @@ class FITS(object):
     def get_fft(self):
         self.fft = np.fft.fft2(self.data)
     def del_fft(self):
-        if hasttr(self, 'fft'): delattr(self, 'fft')
+        if hasattr(self, 'fft'): delattr(self, 'fft')
 
 
     #############################
