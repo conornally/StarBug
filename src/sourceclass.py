@@ -9,7 +9,7 @@ class Source(object):
         self.shp= np.array([shp])
         self.rnd= np.array([rnd])
 
-        #self.set_means()
+        self.set_means()
         self.quality = False
 
     def set_means(self):

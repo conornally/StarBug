@@ -70,6 +70,10 @@ def flatField_divide(fitslist, flat):
         fits.divide(flat)
 
 def align(fitslist):
+    """INPUT: fits instances
+        FUNC: calculates offset between fitsimages
+    """
+        
     fitslist[0].get_fft()
     for i,fits in enumerate(fitslist[1:], start=1):
         fits.get_fft()
@@ -77,6 +81,31 @@ def align(fitslist):
         logging.info('%s offset %s'%(fits, fits.offset))
         if i >=2: fitslist[i-2].del_fft()
         
+def exportOFFSET(fitslist, filename='auto'):
+    """INPUT: list of single instance of FIST
+              filename='auto' if derived from first FITS in list
+              filename='path/to/file.offset' otherwise
+        FUNC: saves list of offsets to filename
+    """
+    if type(fitslist)==FITS: fitslist=[fitslist]
+    if filename=='auto': filename=fitslist[0].filename[:-5]
+    filename+= str(".offset")
+    with open(filename,'w')as offsetfile:
+        for fits in fitslist:
+            offsetfile.write("%s %d %d\n"%(fits, fits.offset[0], fits.offset[1]))
+
+def readinOFFSET(fitslist, filename):
+    """INPUT: offset filename
+    """
+    if type(fitslist)==FITS: fitslist=[fitslist]
+    offset = np.genfromtxt(filename, usecols=(1,2), delimiter=' ')
+    for i, fits in enumerate(fitslist):
+        fits.offset = offset[i] 
+        logging.info("%s <- [%d %d]"%(fits, offset[i,0], offset[i,1]))
+
+
+        
+
 
 
 #######################

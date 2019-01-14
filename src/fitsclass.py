@@ -4,6 +4,7 @@ import astropy.io.fits as fits
 import astropy.stats as stats
 import photutils
 import parse_config
+from alsclass import ALS_DATA
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 
@@ -36,8 +37,31 @@ class FITS(object):
     #################################
     # Source Detection and Analysis #
     #################################
+    def find(self, options={}):
+        """InPUT:   options is a dictionary of config settings
+            FUNC:   Daofind routine to do initial pass on source detection
+            // add in all the options
+        """
+        if options: self.load_options(options)
+        daofind = photutils.DAOStarFinder(  fwhm=self.options['fwhm'],
+                                            threshold=self.options['threshold'],
+                                            sharplo=self.options['sharpness'][0],
+                                            sharphi=self.options['sharpness'][1],
+                                            roundlo=self.options['roundness'][0],
+                                            roundhi=self.options['roundness'][1])
+        sources = daofind(self.data)
+        sources.remove_rows( np.where( sources['flux'] < 50))
+        print(sources)
+        
+        with open('tmp.reg','w') as reg:
+            for line in sources:
+                reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
+                #reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
+        #self.catalog = ALS_DATA(sources=sources)
 
-    def find(self):
+
+
+    def xfind(self):
         """InPUT:   
             FUNC:   Daofind routine to do initial pass on source detection
         """
@@ -323,22 +347,24 @@ class FITS(object):
             
         else: logging.info('Unknown data type')
 
+    
+    def scale(self, a=2):
+        self.data = np.power(self.data, a)
+
+
 
 
     #######################
     # File I/O and config #
     #######################
     
-    def load_options(self):
-        """FUNC:loads in config file and stores options
-        """
-        
-        config = parse_config.load()
-        self.options['fwhm'] = parse_config.get_value('FWHM', config, dtype=float)
-        self.options['threshold'] = parse_config.get_value('Threshold', config, dtype=float)
-        self.options['sigma'] = parse_config.get_value('Sigma', config, dtype=float)
-        self.options['sharpness'] = [parse_config.get_value('SharpLow', config, dtype=float), parse_config.get_value('SharpHigh', config, dtype=float)]
-        self.options['roundness'] = [parse_config.get_value('RoundLow', config, dtype=float), parse_config.get_value('RoundHigh', config, dtype=float)]
+
+    def load_options(self, options):
+        self.options['fwhm'] = options['FWHM']
+        self.options['threshold'] = options['Threshold']
+        self.options['sigma'] = options['Sigma']
+        self.options['sharpness'] = [options['SharpLow'], options['SharpHigh']]
+        self.options['roundness'] = [options['RoundLow'], options['RoundHigh']]
 
 
     def display(self, filename=''):
@@ -352,7 +378,7 @@ class FITS(object):
            filename = self.filename
         logging.info('\x1b[1;33mEXPORTING\x1b[0m: %s --> %s'%(self, filename))
         fits.PrimaryHDU(data=self.data, header=self.header).writeto(filename, overwrite=overwrite)
-        
+
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
 
