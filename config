@@ -1,3 +1,8 @@
+#### FLAGS ####
+ROOT = /home/conor/scripts/StarBug
+DISPLAY = ds9
+
+
 #### CROPPING ####
 Band1 Min Mag = 14
 Band1 Max Mag = 20

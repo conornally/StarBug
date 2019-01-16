@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, glob
 sys.stdout.write('\x1b[s..loading..')
 sys.stdout.flush()
 import logging, argparse, readline, glob
@@ -16,7 +16,8 @@ class StarBug:
         self.fitslist={'Flat':[], 'Dark':[]}
         self.alslist=[]
         self.sourcelist=[]
-        self.commands ={'pre_adjust': self.pre_adjust,
+        self.commands ={'//':self.exit,
+                        'pre_adjust': self.pre_adjust,
                         'build_flat': self.build_flat,
                         'build_dark': self.build_dark,
                         'subtract_dark': self.darkframe_subtract,
@@ -42,11 +43,13 @@ class StarBug:
                         'clean': self.clean,
                         #debug file i/o
                         'exportoffset':self.exportoffset,
+                        'display':self.display,
                         # utils
                         'terminal': self.terminal,
                         'options': self.display_options,
                         'help': self.manual,
                         'exit': self.exit}
+        self.reset_completer()
         if os.path.exists('config'): self.options = parse_config.load()
         self.mainloop()
 
@@ -135,6 +138,7 @@ class StarBug:
         a = float(self.readin("+ "))
         for f in group:
             np.add(f.data, a, out=f.data)
+            logging.debug(f)
 
 
 
@@ -176,10 +180,12 @@ class StarBug:
         print('\x1b[1;37md\x1b[0m: Delete fits from loaded groups')
         print('\x1b[1;37mclean\x1b[0m: Deletes out/ directory')
         print('\x1b[1;37mterminal\x1b[0m: Enter terminal mode')
+        print('\x1b[1;37mdisplay\x1b[0m: Open fits displaying program [specified in config file]')
         print('\x1b[1;37mhelp\x1b[0m: Prints this page')
         print('\x1b[1;37mexit\x1b[0m: Leaves StarBug\n')
 
     def file_loadin(self):
+        self.complete_style = "PATH"
         inString = self.readin('Load Files [Single \x1b[1;37mOR\x1b[0m Space Separated \x1b[1;37mOR\x1b[0m *.fits globbed files \x1b[1;37mOR\x1b[0m From File or Paths]\n>> ') 
         try:
             inlist=[]
@@ -191,6 +197,7 @@ class StarBug:
             inlist = fitsfromtxt( inString ) #path file
 
         self.fitslist[ self.readin('Name for group of files >> ') ] = inlist
+        self.reset_completer()
 
 
     def display_loaded(self):
@@ -205,17 +212,18 @@ class StarBug:
 
 
     def get_group(self, string='Name of loaded group >> '):
-        readline.parse_and_bind("tab: complete")
-        readline.set_completer(self._completeGROUP)
+        self.complete_list = self.fitslist.keys()
         instring = self.readin(string)
+        return_list = []
         if instring in self.fitslist.keys():
-            return self.fitslist[instring]
+            return_list= self.fitslist[instring]
         else: 
             print("Group %s doesn't exist"%instring)
             if self.readin('Create %s y/n: '%instring)=='y': 
                 self.fitslist[instring]=[]
-                return self.fitslist[instring]
-        return []
+                return_list= self.fitslist[instring]
+        self.reset_completer()
+        return return_list
 
     def delete_group(self):
         #Deletes one of the loaded groups
@@ -224,6 +232,7 @@ class StarBug:
             del self.fitslist[group]
             logging.info('%s Deleted'%group)
         else: logging.info('No group named %s'%group)
+
 
     def yank(self):
         pass
@@ -313,8 +322,9 @@ class StarBug:
         if hasattr(self, 'options'):
             print('')
             parse_config.display(self.options)
-            for flist in self.fitslist:
-                for f in flist: f.load_options(self.options)
+            for flist in self.fitslist.values():
+                for f in flist: 
+                    if f: f.load_options(self.options)
 
 
     ###############
@@ -326,6 +336,13 @@ class StarBug:
         """
         exportOFFSET(self.get_group())
 
+    def display(self):
+        """FUNC: displays loaded group
+        """
+        display = self.options['DISPLAY']
+        os.system("%s -console &"%(display))
+
+
     def exit(self):
         quit('Bye!')
 
@@ -334,10 +351,16 @@ class StarBug:
         except: return(input(string))
 
     def complete(self, text, state):
-        for cmd in self.commands.keys():
+        if self.complete_style == "PATH":
+            self.complete_list = glob.glob(text+"*")
+        for cmd in self.complete_list:
             if cmd.startswith(text):
                 if not state: return cmd
                 else: state -= 1
+
+    def reset_completer(self):
+        self.complete_list = self.commands.keys()
+        self.complete_style = "STANDARD"
 
     def _completeGROUP(self, text, state):
         for group in self.fitslist.keys():
@@ -348,9 +371,11 @@ class StarBug:
     def mainloop(self):
         print('\x1b[u\x1b[1;36mHello! Welcome to \x1b[1;32mStarBug\x1b[0m\n')
         command=self.manual
+        readline.set_completer_delims('')
+        #readline.set_completer_delims(' \t\n;')
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(self.complete)
         while command != exit:
-            readline.parse_and_bind("tab: complete")
-            readline.set_completer(self.complete)
             cmd_in = self.readin('> ')
             if cmd_in in self.commands:
                 self.commands[cmd_in]()
