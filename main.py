@@ -154,15 +154,20 @@ class StarBug:
         print('\x1b[1;37msubtract_dark\x1b[0m: Subtracts Dark frame (group) from fits group')
         print('\x1b[1;37mflatfield\x1b[0m: Divides fits group by loaded Flat group')
         print('\x1b[1;37malign\x1b[0m: Get alignment offsets from reference image')
+        print('\x1b[1;37mexportoffset\x1b[0m: Export offsets to file')
         print('\x1b[1;37mstack\x1b[0m: Stacks images based on alignment offset')
+
+        print('\x1b[4;37m\nFILE/PIXEL Manipulations\x1b[0m')
+        print('\x1b[1;37mdtype\x1b[0m: Change data type of pixel arrays')
+        print('\x1b[1;37mheader\x1b[0m: Display header files')
+        print('\x1b[1;37mupdate_header\x1b[0m: Change value in header files')
+        print('\x1b[1;37madd\x1b[0m: Add value to pixels')
+        print('\x1b[1;37mscale\x1b[0m: Scale pixels to power of scaling factor')
 
         print('\x1b[4;37m\nANALYSIS\x1b[0m')
         print('\x1b[1;37mstats\x1b[0m: Get sigma clipped stats of arrays')
 
         print('\x1b[4;37m\nBASIC I/O\x1b[0m')
-        print('\x1b[1;37mdtype\x1b[0m: Change data type of pixel arrays')
-        print('\x1b[1;37mheader\x1b[0m: Display header files')
-        print('\x1b[1;37mupdate_header\x1b[0m: Change value in header files')
         print('\x1b[1;37mload\x1b[0m: Give list, or pathfile of fits fits to be loaded into program')
         print('\x1b[1;37mshow\x1b[0m: Display the currently loaded files')
         print('\x1b[1;37mdelte\x1b[0m: Delete group from loaded files')
@@ -200,6 +205,8 @@ class StarBug:
 
 
     def get_group(self, string='Name of loaded group >> '):
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(self._completeGROUP)
         instring = self.readin(string)
         if instring in self.fitslist.keys():
             return self.fitslist[instring]
@@ -331,6 +338,12 @@ class StarBug:
             if cmd.startswith(text):
                 if not state: return cmd
                 else: state -= 1
+
+    def _completeGROUP(self, text, state):
+        for group in self.fitslist.keys():
+            if group.startswith(text):
+                if not state: return group
+                else: state =-1
 
     def mainloop(self):
         print('\x1b[u\x1b[1;36mHello! Welcome to \x1b[1;32mStarBug\x1b[0m\n')

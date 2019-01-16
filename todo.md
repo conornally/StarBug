@@ -7,6 +7,7 @@ main file:
 > psf build
 > more group interaction
 >> done d, move
+> tab complete in get_group and load
 
 fitsclass.py
 > shift file i/o

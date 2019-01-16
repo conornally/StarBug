@@ -143,7 +143,7 @@ class FITS(object):
         print(self.data)
 
         
-    def stack(self, fitslist, crop=True, update_header=False):
+    def stack(self, fitslist, crop=True, update_header=True):
         """INPUT:  list/single FITS instance
                    (,2) array of offset values
             FUNC:   stacks fits arrays on top of each other based on offset
