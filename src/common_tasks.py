@@ -1,6 +1,8 @@
 import os
-from fitsclass import FITS
-from fileio import *
+try:from fitsclass import FITS
+except:from src.fitsclass import FITS
+try:from fileio import *
+except:from src.fileio import *
 import numpy as np
 import logging
 from astropy.io import fits

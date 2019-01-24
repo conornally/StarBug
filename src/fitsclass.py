@@ -3,8 +3,10 @@ import numpy as np
 import astropy.io.fits as fits
 import astropy.stats as stats
 import photutils
-import parse_config
-from alsclass import ALS_DATA
+try:import parse_config
+except: import src.parse_config
+try:from alsclass import ALS_DATA
+except:from src.alsclass import ALS_DATA
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 

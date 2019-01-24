@@ -5,9 +5,11 @@ from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
 import astropy.units as u
 from astropy import wcs
 
-from sourceclass import Source
+try:from sourceclass import Source
+except:from src.sourceclass import Source
 #from fitsclass import FITS
-from parse_config import *
+try:from parse_config import *
+except:from src.parse_config import *
 
 class ALS_DATA(object):
     def __init__(self, allstar=None, sources=None,fitsfile=None):

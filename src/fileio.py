@@ -1,4 +1,5 @@
-from fitsclass import FITS
+try:from fitsclass import FITS
+except:from src.fitsclass import FITS
 
 def listfromtxt(filename, comment='#'):
     """INPUT: filename of txt file containing list of file names
