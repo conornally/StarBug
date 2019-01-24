@@ -50,7 +50,7 @@ class FITS(object):
                                             roundlo=self.options['roundness'][0],
                                             roundhi=self.options['roundness'][1])
         sources = daofind(self.data)
-        sources.remove_rows( np.where( sources['flux'] < 50))
+        #sources.remove_rows( np.where( sources['flux'] < 50))
         print(sources)
         
         with open('tmp.reg','w') as reg:
@@ -280,6 +280,10 @@ class FITS(object):
         This will be useful for flat fielding, as sometimes there are sources in the image, so i can cut them out here
         """
         pass
+    def clip_below(self, value):
+        """INPUT: value = absolute value below which gets cut to zero
+        """
+        self.data[ np.where( self.data >= value) ] = 1
 
     def basic_stats(self, sigma, iters=3):
         logging.debug("%s Taking basic stats with sigma %f"%(self, sigma))

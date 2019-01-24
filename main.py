@@ -32,6 +32,7 @@ class StarBug:
                         'dtype': self.convert_dtype,
                         'scale': self.scale,
                         'add': self.add,
+                        'cut_below':self.cut_below,
                         # io
                         'load': self.file_loadin,
                         'show': self.display_loaded,
@@ -139,6 +140,13 @@ class StarBug:
         for f in group:
             np.add(f.data, a, out=f.data)
             logging.debug(f)
+
+    def cut_below(self):
+        group = self.get_group()
+        v = self.readin("absolute value >> ")
+        for f in group:
+            f.clip_below(v)
+            logging.info(f)
 
 
 
