@@ -1,4 +1,5 @@
 import numpy as np, logging, time
+np.warnings.filterwarnings('ignore')
 from scipy import optimize
 
 from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
@@ -7,49 +8,89 @@ from astropy import wcs
 
 try:from sourceclass import Source
 except:from src.sourceclass import Source
-#from fitsclass import FITS
+
+try: from fitsclass import FITS
+except: from src.fitsclass import FITS
 try:from parse_config import *
 except:from src.parse_config import *
 
-class ALS_DATA(object):
-    def __init__(self, allstar=None, sources=None,fitsfile=None):
+class CATALOG(object):
+    def __init__(self, fitsfile=None, catalog_style='custom', catalog_filename='', catalog=None, configfile='config'):
         """
-        INPUT:  alsfile - daophot *allstar* output
-                sources - photutils.DAOStarFinder table out
-                fitsfile- fits filename
+        INPUT: fitsfile: filename of fitsfile OR FITSCLASS object
+               catalog_style: 'sextractor' 
+                              'DAOPHOT find'
+                              'DAOPHOT allstar'
+                              'DAOStarFinder'
+                              'photutils DAOPHOT'
+                              'custom'
+               catalog_filename: filename of catalog
+               catalog: catalog data, if loaded from any photutils regimes?
         """
-        #Source(self, ra=0, dec=0, mag=0, magerr=0, shp=0, rnd=0): ##there will be flux in here soon
-        if sources: 
-            self.sourcelist = np.empty((len(sources)), dtype=object)
-            for i, line in enumerate(sources):
-                self.sourcelist[i] = Source(line['xcentroid'], line['ycentroid'], line['mag'], 0, line['sharpness'], line['roundness1'])
+        if type(fitsfile)==None or fitsfile=='': logging.debug("No fitsfile loaded")
+        elif type(fitsfile)==str: self.fits = FITS(fitsfile)
+        elif type(fitsfile)==FITS: self.fits = fitsfile
 
-        elif allstar:
-            pass
-        if fitsfile:
-            pass
-
-
-
-
-
-
-
-        """
-        self.raw_data = self.fromfile( alsfile )
-
-        self.name = alsfile
-        while('/' in self.name):
-            self.name = self.name[self.name.index('/')+1:]
-        if fitsfile: 
-            self.fromfits( fitsfile)
-       
+        self.configfile = configfile
         self.loadconfig()
 
-        self.size = len(self.raw_data)
-        self.sourcelist = np.empty((self.size), dtype=object)
+        self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
+        self.sourcelist = np.empty( (len(self.raw_data)), dtype=object)
         self.build_sourcelist()
+
+        name = catalog_filename
+        while '/' in name: name = name[name.index('/')+1:]
+        self.name = name
+
+    def construct_raw_data(self, catalog_style='custom', catalog_filename='', catalog=None):
+        """INPUT: same as __init__
+            FUNC: creates raw_data numpy array in correct format
         """
+        skip_header=0
+        skip_footer=0
+        delimiter=None
+        comments='#'
+
+        if(catalog_style=='sextractor'):
+            ID = 0
+            flux = 1
+            fluxerr=2
+            mag = 3
+            magerr=4
+            ra = 5
+            dec =6
+            x = 7
+            y = 8
+            skip_header = 9
+            #skip_footer = 0
+        else: #custom
+            ID = int(get_value('IDcol', configfile=self.configfile))
+            flux = int(get_value('Fluxcol', configfile=self.configfile))
+            fluxerr = int(get_value('FluxErrcol', configfile=self.configfile))
+            mag = int(get_value('Magcol', configfile=self.configfile))
+            magerr = int(get_value('MagErrcol', configfile=self.configfile))
+            ra = int(get_value('RAcol', configfile=self.configfile))
+            dec = int(get_value('DECcol', configfile=self.configfile))
+            x = int(get_value('Xcol', configfile=self.configfile))
+            y = int(get_value('Ycol', configfile=self.configfile))
+            skip_header = int(get_value('skip_header', configfile=self.configfile))
+            skip_footer = int(get_value('skip_footer', configfile=self.configfile))
+            comments = int(get_value('Comments', configfile=self.configfile))
+            delimiter = int(get_value('delimiter', configfile=self.configfile))
+
+        load_in_data = np.genfromtxt( catalog_filename, skip_header=skip_header, skip_footer=skip_footer, comments=comments, delimiter=delimiter)
+        raw_data = np.zeros((np.shape(load_in_data)[0],9))
+
+        raw_data[:,0] = load_in_data[:,ID]
+        raw_data[:,1] = load_in_data[:,x]
+        raw_data[:,2] = load_in_data[:,y]
+        raw_data[:,3] = load_in_data[:,ra]
+        raw_data[:,4] = load_in_data[:,dec]
+        raw_data[:,5] = load_in_data[:,flux]
+        raw_data[:,6] = load_in_data[:,fluxerr]
+        raw_data[:,7] = load_in_data[:,mag]
+        raw_data[:,8] = load_in_data[:,magerr]
+        return raw_data
 
     def setup(self):
         """
@@ -69,32 +110,37 @@ class ALS_DATA(object):
         self.fits = FITS( filename )    
 
     def loadconfig(self):
-        if not self.fits.header['CHNLNUM']: 
-            i = int(input("Wavelength Band [int]: "))
-        else: i = self.fits.header['CHNLNUM']
+        if hasattr(self, 'fits'):
+            if 'CHNLNUM' in self.fits.header: i=self.fits.header['CHNLNUM']
+            elif 'FILTER' in self.fits.header: i=self.fits.header['FILTER']
+            else:i = str(input("Wavelength Band [int]: "))
+        else:    i = str(input("Wavelength Band [int]: "))
+        if not i: i='0'
+        i = i.replace(' ','')
+
         config = {'BAND':i}
-        config['ZP_Flux'] = float(get_value("Band%s Zero Point"%i))
-        config['ZP_ERR'] = float(get_value("Band%s Zero Point Error"%i))
-        config['Colour Correction'] = float(get_value("Band%s Colour Correction"%i))
-        config['Max Mag'] = float(get_value("Band%s Max Mag"%i))
-        config['Min Mag'] = float(get_value("Band%s Min Mag"%i))
-        config['Mag Error'] = float(get_value("Band%s Mag Error"%i))
-        config['Max Sharp'] = float(get_value("Band%s Max Sharp"%i))
-        config['Min Sharp'] = float(get_value("Band%s Min Sharp"%i))
-        config['Max Round'] = float(get_value("Band%s Max Round"%i))
-        config['Min Round'] = float(get_value("Band%s Min Round"%i))
+        config['ZP_Flux'] = float(get_value("Band%s Zero Point"%i, configfile=self.configfile))
+        config['ZP_ERR'] = float(get_value("Band%s Zero Point Error"%i, configfile=self.configfile))
+        config['Colour Correction'] = float(get_value("Band%s Colour Correction"%i, configfile=self.configfile))
+        config['Max Mag'] = float(get_value("Band%s Max Mag"%i, configfile=self.configfile))
+        config['Min Mag'] = float(get_value("Band%s Min Mag"%i, configfile=self.configfile))
+        config['Mag Error'] = float(get_value("Band%s Mag Error"%i, configfile=self.configfile))
+        config['Max Sharp'] = float(get_value("Band%s Max Sharp"%i, configfile=self.configfile))
+        config['Min Sharp'] = float(get_value("Band%s Min Sharp"%i, configfile=self.configfile))
+        config['Max Round'] = float(get_value("Band%s Max Round"%i, configfile=self.configfile))
+        config['Min Round'] = float(get_value("Band%s Min Round"%i, configfile=self.configfile))
 
         self.config = config
-
 
     def xy2radec(self):
         WCS = wcs.WCS(self.fits.header, relax=False)
         self.raw_data[:,1:3] = WCS.all_pix2world(self.raw_data[:,1:3],0)
 
     def build_sourcelist(self):
-        self.xy2radec()
+        #self.xy2radec()
         for i, l in enumerate(self.raw_data):
-            self.sourcelist[i] = Source( l[1], l[2], l[3], l[4], l[8], l[7])
+            #self.sourcelist[i] = Source( l[1], l[2], l[3], l[4], l[8], l[7])
+            self.sourcelist[i] = Source( *l )
 
 
     def testing(self):
@@ -254,17 +300,5 @@ class ALS_DATA(object):
 
 
 if __name__=='__main__':
-    import time
-    start = time.time()
-    als = ALS_DATA('../test/test1.als', '../test/test1.fits' )
-    als2 = ALS_DATA('../test/test2.als', '../test/test2.fits' )
-    als.setup()
-    als2.setup()
-    #als3 = ALS_DATA('../test/test3.als', '../test/test3.fits' )
-    #als.combine(als1)
-    #als.calibrate()
-    #als.data_crop()
-    #als.EpochMatch([als2, als3])
-    #als.BandMatch(als)
-    als.align(als2)
-    print(time.time()-start)
+    cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
+    print(cat)

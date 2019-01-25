@@ -10,15 +10,22 @@ def load(config='config'):
         return(options)
 
 
-def get_value(string, lines=False, dtype=str):
-    if not lines: lines = load()
-    for i in range(len(lines)):
-        if string in lines[i]:
+def get_value(string, lines=False, dtype=str, configfile='config'):
+    """
+    if not lines: lines = load(configfile)
+    print(lines)
+    for key in lines.keys():
+        if string in key:
             return(dtype(parse_value(lines[i])))
-
+    """
+    if not lines: lines = load(configfile)
+    if string in lines.keys():
+        return(dtype(lines[string]))
+    else: return False
 
 
 def parse_value(line, separator='='):
+    #if '#' in line: line = line[:line.index('#')]
     if separator not in line: return line
     try: return(float(line[ line.index(separator)+1: ]))
     except: return(str(line[ line.index(separator)+1: ]))

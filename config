@@ -2,15 +2,30 @@
 ROOT = /home/conor/scripts/StarBug
 DISPLAY = ds9
 
+#### CATALOG STUFF ####
+Style = sextractor
+IDcol = 0
+Fluxcol = 1
+FLuxErrcol = 2
+Magcol = 3
+MagErrcol = 4
+RAcol = 5
+DECcol = 6
+Xcol = 7
+Ycol = 8
+skip_header = 0
+skip_footer = 0
+Comments = '#'
+delimiter = ' '
 
 #### CROPPING ####
-Band1 Min Mag = 14
-Band1 Max Mag = 20
-Band1 Mag Error = 0.4
-Band1 Max Sharp = 2.0
-Band1 Min Sharp = -3.0
-Band1 Max Round = 1.5
-Band1 Min Round = -1.5
+Bandg Min Mag = 14
+Bandg Max Mag = 20
+Bandg Mag Error = 0.4
+Bandg Max Sharp = 2.0
+Bandg Min Sharp = -3.0
+Bandg Max Round = 1.5
+Bandg Min Round = -1.5
 
 #### Photometry ####
 FWHM = 20
@@ -20,4 +35,48 @@ SharpHigh = 0.75
 SharpLow = 0.25
 RoundHigh = 1.0
 RoundLow = -1.0
+
+#### INPUTS ####
+Number of Epochs = 1
+Number of Bands = 2
+
+#syntax F$(Band)_$(Epoch)=/path/to/file.fits
+F1_1=
+F1_2=
+F1_3=
+F1_4=
+
+F2_1=
+F2_2=
+F2_3=
+F2_4=
+
+#syntax A$(Band)_$(Epoch)=/path/to/file.als
+
+A1_1=
+A1_2=
+A1_3=
+A1_4=
+
+A2_1=
+A2_2=
+A2_3=
+A2_4=
+
+# Dark frames: D$(Band)_$(Epoch)_$(Frame)=path/to/file.fits
+DarkFile=
+D1_1_01=
+D1_1_02=
+D1_1_03=
+
+
+
+#### CORRECTIONS ####
+Band1 Zero Point = 280900
+Band1 Zero Point Error = 4100
+Band1 Colour Correction = 1.0063
+
+Band2 Zero Point = 179700
+Band2 Zero Point Error = 2600
+Band2 Colour Correction = 1.0080
 

@@ -5,8 +5,8 @@ import astropy.stats as stats
 import photutils
 try:import parse_config
 except: import src.parse_config
-try:from alsclass import ALS_DATA
-except:from src.alsclass import ALS_DATA
+#try:from catclass import CATALOG
+#except:from src.catclass import CATALOG
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 
