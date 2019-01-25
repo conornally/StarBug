@@ -1,7 +1,7 @@
 import os, sys
 sys.stdout.write('\x1b[s..loading..')
 sys.stdout.flush()
-import logging, argparse, readline, glob
+import logging, readline, glob
 
 
 from fitsclass import FITS
@@ -22,6 +22,9 @@ class StarBug:
                         'flatfielding': self.flatfield_divide,
                         'align': self.calculate_offset,
                         'stack': self.stack,
+                        # catalog stuff
+                        'loadcat': self.loadcat,
+                        'catcombine':self.catcombine,
                         # analysis
                         'stats': self.stats,
                         'find': self.find,
@@ -33,7 +36,6 @@ class StarBug:
                         'cut_below':self.cut_below,
                         # io
                         'load': self.file_loadin,
-                        'loadcat': self.loadcat,
                         'show': self.display_loaded,
                         'header': self.display_header,
                         'd': self.delete,
@@ -52,7 +54,7 @@ class StarBug:
         self.reset_completer()
         if os.path.exists('config'): self.options = parse_config.load()
         else: logging.warning("\x1b[u\x1b[1;31mNo config file found in directory\x1b[0m")
-        self.mainloop()
+        #self.mainloop()
 
 
     ##########################
@@ -149,6 +151,25 @@ class StarBug:
             logging.info(f)
 
 
+    #################
+    # Catalog stuff #
+    #################
+
+    def get_cat(self, string='Name of loaded catalog >> '):
+        self.complete_list = self.cataloglist.keys()
+        instring = self.readin(string)
+        return_cat = []
+        if instring in self.cataloglist.keys():
+            return_cat= self.cataloglist[instring]
+        else: 
+            print("Catalog %s doesn't exist"%instring)
+        self.reset_completer()
+        return return_cat
+
+    def catcombine(self):
+        cat1 = self.get_cat("Name of first loaded catalog >> ")
+        cat2 = self.get_cat("Name of second loaded catalog >> ")
+        cat1.combine(cat2)
 
 
     #############################
@@ -175,6 +196,9 @@ class StarBug:
         print('\x1b[1;37mupdate_header\x1b[0m: Change value in header files')
         print('\x1b[1;37madd\x1b[0m: Add value to pixels')
         print('\x1b[1;37mscale\x1b[0m: Scale pixels to power of scaling factor')
+
+        print('\x1b[4;37m\nCatalog Manipulation\x1b[0m')
+        print('\x1b[1;37mcatcombine\x1b[0m: Combine two catalogs together (usually of the same filter)')
 
         print('\x1b[4;37m\nANALYSIS\x1b[0m')
         print('\x1b[1;37mstats\x1b[0m: Get sigma clipped stats of arrays')
@@ -217,8 +241,14 @@ class StarBug:
             name = self.readin('Catalog Name >> ')
             #self.extension = '.fits'
             fitsfilename = self.readin('Assosiated fitsfile (if applicable) >> ')
-            self.cataloglist[name] = CATALOG(fitsfile = fitsfilename, catalog_style=catalog_style, catalog_filename=infile)
+            self._loadcatAUTO(catalog_filename, fitsfilename, catalog_style)
         self.reset_completer()
+
+    def _loadcatAUTO(self, catname, catalog_filename, fitsfilename, catalog_style='sextractor'):
+        """FINAL catalog loading step
+            has no manual inputs, so can load catalogs automatically
+        """
+        self.cataloglist[catname] = CATALOG(fitsfile=fitsfilename, catalog_style=catalog_style, catalog_filename=catalog_filename)
 
 
 
@@ -365,7 +395,10 @@ class StarBug:
         """FUNC: displays loaded group
         """
         display = self.options['DISPLAY']
-        os.system("%s -console &"%(display))
+        files = ''
+        for f in self.get_group():
+            files += "%s "%f.filename
+        os.system("%s %s %s&"%(display, files, self.options['DISPLAYFLAGS']))
 
 
     def exit(self):
@@ -407,6 +440,7 @@ class StarBug:
                 self.commands[cmd_in]()
 
 
+if __name__=='__main__':
+    StarBug().mainloop()
 
-StarBug()
 

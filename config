@@ -1,6 +1,7 @@
 #### FLAGS ####
 ROOT = /home/conor/scripts/StarBug
 DISPLAY = ds9
+DISPLAYFLAGS = -zoom to fit
 
 #### CATALOG STUFF ####
 Style = sextractor

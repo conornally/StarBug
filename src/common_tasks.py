@@ -106,7 +106,7 @@ def readinOFFSET(fitslist, filename):
         logging.info("%s <- [%d %d]"%(fits, offset[i,0], offset[i,1]))
 
 
-        
+     
 
 
 

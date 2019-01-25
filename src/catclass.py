@@ -32,7 +32,7 @@ class CATALOG(object):
         elif type(fitsfile)==FITS: self.fits = fitsfile
 
         self.configfile = configfile
-        self.loadconfig()
+        if hasattr(self, 'fits'): self.loadconfig() #FOR NOW!! need to allow not including fits properlly
 
         self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
         self.sourcelist = np.empty( (len(self.raw_data)), dtype=object)
@@ -153,16 +153,16 @@ class CATALOG(object):
         print(time.time() - start)
 
 
-    def combine(self, ALS):
+    def combine(self, CAT):
         """
         INPUT: list or single instance of ALS_DATA()
         FUNC: Appends the sourcelist onto bottom of self,sourcelist
         """
-        if type(ALS) == ALS_DATA: ALS = [ALS]
-        for als in ALS: 
-            self.sourcelist = np.append(self.sourcelist, als.sourcelist)
+        if type(CAT) == CATALOG: CAT = [CAT]
+        for cat in CAT: 
+            self.sourcelist = np.append(self.sourcelist, cat.sourcelist)
             self.size = len(self.sourcelist)
-            logging.info("COMBINING: {} += {} --> Sources: {}".format(self, als, self.size))
+            logging.info("COMBINING: {} += {} --> Sources: {}".format(self, cat, self.size))
 
     def calibrate(self, units='Dns-1_mJy'):
         """
