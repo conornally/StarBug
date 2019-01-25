@@ -2,7 +2,7 @@ import os, sys, logging
 import numpy as np
 import astropy.io.fits as fits
 import astropy.stats as stats
-import photutils
+#import photutils
 try:import parse_config
 except: import src.parse_config
 #try:from catclass import CATALOG
@@ -39,11 +39,11 @@ class FITS(object):
     #################################
     # Source Detection and Analysis #
     #################################
+    """
     def find(self, options={}):
-        """InPUT:   options is a dictionary of config settings
-            FUNC:   Daofind routine to do initial pass on source detection
-            // add in all the options
-        """
+        #InPUT:   options is a dictionary of config settings
+            #FUNC:   Daofind routine to do initial pass on source detection
+           # // add in all the options
         if options: self.load_options(options)
         daofind = photutils.DAOStarFinder(  fwhm=self.options['fwhm'],
                                             threshold=self.options['threshold'],
@@ -64,9 +64,9 @@ class FITS(object):
 
 
     def xfind(self):
-        """InPUT:   
-            FUNC:   Daofind routine to do initial pass on source detection
-        """
+        #InPUT:   
+            #FUNC:   Daofind routine to do initial pass on source detection
+        
         if self.options['threshold'] ==0: logging.warning('Threshold at default: 0, Change this for source detection')
         else:
             print(self.options)
@@ -85,7 +85,7 @@ class FITS(object):
                 for line in self.sourcelist:
                     #reg.write('circle({}, {}, {})\n'.format(line['xcentroid'], line['ycentroid'], self.options['fwhm']))
                     reg.write('{} {}\n'.format(line['xcentroid'], line['ycentroid']))
-
+    """
 
     def get_offset(self, fitsobj, calcFFTs=False):
         """INPUT:   instance of FITS
