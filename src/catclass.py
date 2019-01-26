@@ -1,4 +1,4 @@
-import numpy as np, logging, time
+import os, numpy as np, logging, time
 np.warnings.filterwarnings('ignore')
 from scipy import optimize
 
@@ -64,19 +64,19 @@ class CATALOG(object):
             skip_header = 9
             #skip_footer = 0
         else: #custom
-            ID = int(get_value('IDcol', configfile=self.configfile))
-            flux = int(get_value('Fluxcol', configfile=self.configfile))
-            fluxerr = int(get_value('FluxErrcol', configfile=self.configfile))
-            mag = int(get_value('Magcol', configfile=self.configfile))
-            magerr = int(get_value('MagErrcol', configfile=self.configfile))
-            ra = int(get_value('RAcol', configfile=self.configfile))
-            dec = int(get_value('DECcol', configfile=self.configfile))
-            x = int(get_value('Xcol', configfile=self.configfile))
-            y = int(get_value('Ycol', configfile=self.configfile))
-            skip_header = int(get_value('skip_header', configfile=self.configfile))
-            skip_footer = int(get_value('skip_footer', configfile=self.configfile))
-            comments = int(get_value('Comments', configfile=self.configfile))
-            delimiter = int(get_value('delimiter', configfile=self.configfile))
+            ID =    get_value('IDcol',      configfile=self.configfile, dtype=int)
+            flux =  get_value('Fluxcol',    configfile=self.configfile, dtype=int)
+            fluxerr=get_value('FluxErrcol', configfile=self.configfile, dtype=int)
+            mag =   get_value('Magcol',     configfile=self.configfile, dtype=int)
+            magerr =get_value('MagErrcol',  configfile=self.configfile, dtype=int)
+            ra =    get_value('RAcol',      configfile=self.configfile, dtype=int)
+            dec =   get_value('DECcol',     configfile=self.configfile, dtype=int)
+            x =     get_value('Xcol',       configfile=self.configfile, dtype=int)
+            y =     get_value('Ycol',       configfile=self.configfile, dtype=int)
+            skip_header = get_value('skip_header', configfile=self.configfile,dtype=int)
+            skip_footer = get_value('skip_footer', configfile=self.configfile,dtype=int)
+            #comments    = get_value('Comments', configfile=self.configfile)
+            #delimiter =   get_value('delimiter', configfile=self.configfile)
 
         load_in_data = np.genfromtxt( catalog_filename, skip_header=skip_header, skip_footer=skip_footer, comments=comments, delimiter=delimiter)
         raw_data = np.zeros((np.shape(load_in_data)[0],9))
@@ -139,18 +139,7 @@ class CATALOG(object):
     def build_sourcelist(self):
         #self.xy2radec()
         for i, l in enumerate(self.raw_data):
-            #self.sourcelist[i] = Source( l[1], l[2], l[3], l[4], l[8], l[7])
             self.sourcelist[i] = Source( *l )
-
-
-    def testing(self):
-        start = time.time()
-        for s in self.sourcelist:
-            s.ra*=2
-        print(time.time() - start)
-        start = time.time()
-        self.raw_data[:,1]*=2
-        print(time.time() - start)
 
 
     def combine(self, CAT):
@@ -212,17 +201,17 @@ class CATALOG(object):
 
 
 
-    def BandMatch(self, ALS):
-        logging.info("\x1b[1;33mMATCHING\x1b[0m Bands: %s <-- %s"%(self, ALS))
+    def BandMatch(self, CAT):
+        logging.info("\x1b[1;33mMATCHING\x1b[0m Bands: %s <-- %s"%(self, CAT))
         for s in self.sourcelist: s.set_means()
-        self.match(ALS, regime='band')
+        self.match(CAT, regime='band')
         
-    def EpochMatch(self, ALS):
-        logging.info("\x1b[1;33mMATCHING\x1b[0m Epochs: %s <-- %s"%(self, ALS))
+    def EpochMatch(self, CAT):
+        logging.info("\x1b[1;33mMATCHING\x1b[0m Epochs: %s <-- %s"%(self, CAT))
         for s in self.sourcelist: s.set_means()
-        self.match(ALS, regime='epoch')
+        self.match(CAT, regime='epoch')
 
-    def match(self, ALS, regime='epoch'):
+    def match(self, CAT, regime='epoch'):
         """
         INPUT: >List or single instance of ALS_DATA(), 
                >regime is 'band' or 'epoch' matching
@@ -231,9 +220,9 @@ class CATALOG(object):
         (should i retake averages inbetween matches?)
         this will be a loooot slower though, but maybe more representative
         """
-        if type(ALS) == ALS_DATA: ALS = [ALS]
+        if type(CAT) == CATALOG: CAT = [CAT]
         
-        for cat in ALS:
+        for cat in CAT:
             logging.info('...%s'%cat)
             radec = np.array( [ [s.RA, s.DEC ] for s in self.sourcelist])
             radec = SkyCoord( ra=Angle( radec[:,0], unit=u.deg), dec=Angle( radec[:,1], unit=u.deg) )
@@ -254,10 +243,12 @@ class CATALOG(object):
             self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
             logging.info("Sources: %d"%len(self.sourcelist))
+            logging.info(len(bad))
 
     def single_match(self, cat):
         return match_coordinates_sky(self.cat, cat)
 
+    """
     def func(self, offsets, ALS=None):
         offset = SkyCoord( ra=offsets[0]*np.ones((ALS.size))*u.deg, dec=offsets[1]*np.ones((ALS.size))*u.deg)
         #tmpcat = SkyCoord( ra=Angle( [ra]*ALS.size, unit=u.deg), dec=Angle( [dec]*ALS.size, unit=u.deg))
@@ -276,10 +267,8 @@ class CATALOG(object):
 
 
     def align(self, ALS):
-        """
-        will need to pull out all the star data into an array, otherwise scipy will take hours
-        match function will need to be v.fast
-        """
+        #will need to pull out all the star data into an array, otherwise scipy will take hours
+        #match function will need to be v.fast
         #out =optimize.minimize( self.func, [0.0,0.0], args=ALS) 
         ra = self.fits.header['CRVAL1']
         dec = self.fits.header['CRVAL2']
@@ -288,6 +277,23 @@ class CATALOG(object):
         out = optimize.brute( self.func, [[ra-perc*ra, ra+perc*ra], [dec-perc*dec, dec+perc*dec]], args=[ALS])
         print(out)
         # print(self.size - out['fun'])
+    """
+
+    def display(self):
+        print("Catalog: %s sources: %i"%(self, len(self.sourcelist)))
+        for i in range(10):
+            if i<len(self.sourcelist):
+                print(self.sourcelist[i])
+
+    def exportRegionfile(self):
+        #Func: creates ds9 region file in WCS degrees
+        if not os.path.isdir('out'):
+            os.system('mkdir out/')
+        with open("out/%s.reg"%self.name[:-4],'w') as outcat:
+            logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s.reg"%self.name[:-4])
+            for s in self.sourcelist:
+                outcat.write("circle(%fd, %fd, 10)\n"%(s.RA, s.DEC))
+
 
 
 

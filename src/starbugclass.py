@@ -25,6 +25,10 @@ class StarBug:
                         # catalog stuff
                         'loadcat': self.loadcat,
                         'catcombine':self.catcombine,
+                        'bandmatch': self.bandMatch,
+                        'epochmatch':self.epochMatch,
+                        'catdisplay': self.catdisplay,
+                        'exportregion': self.exportRegion,
                         # analysis
                         'stats': self.stats,
                         'find': self.find,
@@ -170,6 +174,29 @@ class StarBug:
         cat1 = self.get_cat("Name of first loaded catalog >> ")
         cat2 = self.get_cat("Name of second loaded catalog >> ")
         cat1.combine(cat2)
+
+    def bandMatch(self):
+        """FUNC: Match two catalogs of different bands/filters
+        """
+        cat1 = self.get_cat("Name of first loaded catalog >> ")
+        cat2 = self.get_cat("Name of second loaded catalog >> ")
+        cat1.BandMatch(cat2)
+
+    def epochMatch(self):
+        """FUNC: Match two catalogs of different epochs/tiles
+        """
+        cat1 = self.get_cat("Name of first loaded catalog >> ")
+        cat2 = self.get_cat("Name of second loaded catalog >> ")
+        cat1.EpochMatch(cat2)
+
+    def catdisplay(self):
+        cat = self.get_cat()
+        if cat: cat.display()
+
+    def exportRegion(self):
+        cat = self.get_cat()
+        if cat: cat.exportRegionfile()
+
 
 
     #############################

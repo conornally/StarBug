@@ -4,10 +4,10 @@ DISPLAY = ds9
 DISPLAYFLAGS = -zoom to fit
 
 #### CATALOG STUFF ####
-Style = sextractor
+Style = custom
 IDcol = 0
 Fluxcol = 1
-FLuxErrcol = 2
+FluxErrcol = 2
 Magcol = 3
 MagErrcol = 4
 RAcol = 5
