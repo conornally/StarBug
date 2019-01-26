@@ -29,6 +29,8 @@ class StarBug:
                         'epochmatch':self.epochMatch,
                         'catdisplay': self.catdisplay,
                         'exportregion': self.exportRegion,
+                        'savecat':self.exportcat,
+                        'confidence_cut':self.cat_cutlowconfidence,
                         # analysis
                         'stats': self.stats,
                         'find': self.find,
@@ -197,6 +199,16 @@ class StarBug:
         cat = self.get_cat()
         if cat: cat.exportRegionfile()
 
+    def exportcat(self):
+        cat = self.get_cat()
+        if cat: cat.exportcat()
+
+    def cat_cutlowconfidence(self):
+        cat = self.get_cat()
+        if cat: cat.cut_lowconfidence()
+
+
+
 
 
     #############################
@@ -226,6 +238,10 @@ class StarBug:
 
         print('\x1b[4;37m\nCatalog Manipulation\x1b[0m')
         print('\x1b[1;37mcatcombine\x1b[0m: Combine two catalogs together (usually of the same filter)')
+        print('\x1b[1;37mcatdisplay\x1b[0m: Display shortened version of catalog')
+        print('\x1b[1;37mbandmatch\x1b[0m: Match two catalogs of different bands/filters')
+        print('\x1b[1;37mepochmatch\x1b[0m: Match two catalogs of different epochs/tiles')
+        print('\x1b[1;37mexportregion\x1b[0m: Export ds9 region file in WCS degrees')
 
         print('\x1b[4;37m\nANALYSIS\x1b[0m')
         print('\x1b[1;37mstats\x1b[0m: Get sigma clipped stats of arrays')
@@ -262,13 +278,15 @@ class StarBug:
     def loadcat(self):
         self.complete_style = "PATH"
         #self.extension = '.cat'
-        infile = self.readin('Load in Catalog >> ')
+        catalog_filename = self.readin('Load in Catalog >> ')
         catalog_style = self.readin('Catalog style [ sextractor , custom ] >> ')
-        if infile: 
-            name = self.readin('Catalog Name >> ')
+        if catalog_filename: 
+            catname = self.readin('Catalog Name >> ')
             #self.extension = '.fits'
             fitsfilename = self.readin('Assosiated fitsfile (if applicable) >> ')
-            self._loadcatAUTO(catalog_filename, fitsfilename, catalog_style)
+
+            self._loadcatAUTO(catname, catalog_filename, fitsfilename, catalog_style)
+
         self.reset_completer()
 
     def _loadcatAUTO(self, catname, catalog_filename, fitsfilename, catalog_style='sextractor'):

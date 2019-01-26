@@ -1,6 +1,6 @@
 import numpy as np
 np.warnings.filterwarnings('ignore')
-from src.starbugclass import StarBug
+from src.starbug import StarBug
 import argparse
 
 parser = argparse.ArgumentParser(description='parse some args')

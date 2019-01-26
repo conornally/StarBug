@@ -7,39 +7,59 @@ class Source(object):
                         ra=np.nan, dec=np.nan, 
                         flux=np.nan, fluxerr=np.nan, 
                         mag=np.nan, magerr=np.nan, 
-                        shp=np.nan, rnd=np.nan):
-        self.ID = ID
-        self.x = np.array([x])
-        self.y = np.array([y])
-        self.ra= np.array([ra])
-        self.dec= np.array([dec])
-        self.flux = np.array([flux], dtype=np.float64)
-        self.fluxerr = np.array([fluxerr], dtype=np.float64)
-        self.mag= np.array([mag], dtype=np.float64)
-        self.magerr= np.array([magerr], dtype=np.float64)
-        self.shp= np.array([shp])
-        self.rnd= np.array([rnd])
+                        shp=np.nan, rnd=np.nan,
+                        bands=1, epochs=0):
+        if not epochs: shape = np.ones((bands))
+        else: shape = np.ones((bands, epochs))
+        self.ID =       ID *shape
+        self.x =        x*shape
+        self.y =        y*shape
+        self.ra=        ra*shape
+        self.dec=       dec*shape
+        self.flux =     flux*shape
+        self.fluxerr=   fluxerr*shape
+        self.mag=       mag*shape
+        self.magerr=    magerr*shape
+        self.shp=       shp*shape
+        self.rnd=       rnd*shape
+
+        self.numBands = 1
+        self.numEpochs= 1
 
         self.set_means()
         self.quality = False
+        self.resolved_in = 1
+        
 
     def set_means(self):
-        self.RA = np.nanmean( self.ra )
-        self.DEC= np.nanmean( self.dec)
-        self.FLUX= np.nanmean(self.flux)
-        self.FLUXERR= np.nanmean(self.fluxerr)
-        self.MAG= np.nanmean( self.mag)
-        self.MAGERR= np.nanmean( self.magerr)
-        self.SHARP= np.nanmean(self.shp)
-        self.ROUND= np.nanmean(self.rnd)
-
-    def append_Epoch(self, source):
+        self.RA =       np.nanmean( self.ra)
+        self.DEC=       np.nanmean( self.dec)
+        if self.numEpochs > 1:
+            self.FLUX=      np.nanmean(self.flux,0)
+            self.FLUXERR=   np.nanmean(self.fluxerr,0)
+            self.MAG=       np.nanmean( self.mag,0)
+            self.MAGERR=    np.nanmean( self.magerr,0)
+            self.SHARP=     np.nanmean(self.shp,0)
+            self.ROUND=     np.nanmean(self.rnd,0)
+        else:
+            self.FLUX=      self.flux
+            self.FLUXERR=   self.fluxerr
+            self.MAG=       self.mag
+            self.MAGERR=    self.magerr
+            self.SHARP=     self.shp
+            self.ROUND=     self.rnd
+    def append_Band(self, source=False, bad=False):
         """
         INPUT: instance of Source()
         FUNC: This will append an epoch of data onto each of the stats in self
-        LIMITATIONS FOR NOW: EPOCH MUST BE DONE FIRST
+        LIMITATIONS FOR NOW: BAND MUST BE DONE FIRST
         """
         #for now, just ra
+        if bad or not source:
+            if self.numEpochs==1: source = Source(bands=self.numBands, epochs=0)
+            else: source = Source(bands=self.numBands, epochs=self.numEpochs)
+        else: self.resolved_in +=1
+
         self.x = np.concatenate((self.x, source.x),0)
         self.y = np.concatenate((self.y, source.y),0)
         self.ra = np.concatenate((self.ra, source.ra),0)
@@ -51,12 +71,19 @@ class Source(object):
         self.shp = np.concatenate((self.shp, source.shp),0)
         self.rnd = np.concatenate((self.rnd, source.rnd),0)
 
-    def append_Band(self, source):
+        self.numBands +=1
+
+    def append_Epoch(self, source=False, bad=False):
         """
         INPUT: instance of Source()
         FUNC: This will append an band of data onto each of the stats in self
-        LIMITATIONS FOR NOW: EPOCH MUST BE DONE FIRST
+        LIMITATIONS FOR NOW: BAND MUST BE DONE FIRST
         """
+
+        if bad or not source:
+            if self.numEpochs==1: source = Source(bands=self.numBands, epochs=0)
+            else: source = Source(bands=self.numBands, epochs=self.numEpochs)
+        else: self.resolved_in +=1
         self.x = np.stack((self.x, source.x))
         self.y = np.stack((self.y, source.y))
         self.ra = np.stack((self.ra, source.ra)) 
@@ -67,13 +94,22 @@ class Source(object):
         self.magerr = np.stack((self.magerr, source.magerr)) 
         self.shp = np.stack((self.shp, source.shp)) 
         self.rnd = np.stack((self.rnd, source.rnd)) 
-
+    
+        self.numEpochs +=1
         
-    def set_nan(self):
-        pass
+    def createExportString(self):
+        self.set_means()
+        exportstring="%f %f"%(self.RA, self.DEC)
+
+        for band in range(self.numBands):
+            exportstring += " %f %f"%(self.FLUX[band], self.FLUXERR[band])
+        for band in range(self.numBands):
+            exportstring += " %f %f"%(self.MAG[band], self.MAGERR[band])
+        return exportstring
 
     def __repr__(self):
-        return("\x1b[1;32m%s\x1b[0m: %.4f %.4f %.4f"%(self.ID, self.RA, self.DEC, self.MAG))
+        #return("\x1b[1;32m%s\x1b[0m: %.4f %.4f %.4f"%(self.ID, self.RA[0], self.DEC[0], self.MAG[0]))
+        return("\x1b[1;32m{}\x1b[0m: {} {} {}".format(self.ID, self.RA, self.DEC, self.MAG))
 
 if __name__=='__main__':
     pass

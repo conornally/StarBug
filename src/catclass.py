@@ -239,45 +239,17 @@ class CATALOG(object):
                         if regime=='epoch': self.sourcelist[i].append_Epoch(cat.sourcelist[IDX])
                         elif regime=='band': self.sourcelist[i].append_Band(cat.sourcelist[IDX])
                         self.sourcelist[i].quality= True
+                if((i in bad) and True):
+                    if regime=='epoch': self.sourcelist[i].append_Epoch(bad=True)
+                    elif regime=='band': self.sourcelist[i].append_Band(bad=True)
                 #If i dont crop out the bad sources i will NEED to append 9999 values to sourcelist objects..
-            self.sourcelist = [s for s in self.sourcelist if s.quality]
+            #self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
             logging.info("Sources: %d"%len(self.sourcelist))
             logging.info(len(bad))
 
     def single_match(self, cat):
         return match_coordinates_sky(self.cat, cat)
-
-    """
-    def func(self, offsets, ALS=None):
-        offset = SkyCoord( ra=offsets[0]*np.ones((ALS.size))*u.deg, dec=offsets[1]*np.ones((ALS.size))*u.deg)
-        #tmpcat = SkyCoord( ra=Angle( [ra]*ALS.size, unit=u.deg), dec=Angle( [dec]*ALS.size, unit=u.deg))
-        #tmpcat.ra += ALS.cat.ra
-        
-        tmpcat = SkyCoord( ra=ALS.cat.ra+offset.ra, dec=ALS.cat.dec+offset.dec)
-        idx, d2d, d3d = self.single_match(tmpcat)
-        bad = np.where(d2d.arcsec > 1)[0]
-        badlen = len(bad)
-        for i, IDX in enumerate(idx):
-            if i not in bad:
-                if d2d[i] != min(d2d[np.where( idx==IDX)]):
-                    badlen+=1
-        print(offsets, self.size, badlen)
-        return(badlen)
-
-
-    def align(self, ALS):
-        #will need to pull out all the star data into an array, otherwise scipy will take hours
-        #match function will need to be v.fast
-        #out =optimize.minimize( self.func, [0.0,0.0], args=ALS) 
-        ra = self.fits.header['CRVAL1']
-        dec = self.fits.header['CRVAL2']
-        print(ra,dec)
-        perc=0.0001
-        out = optimize.brute( self.func, [[ra-perc*ra, ra+perc*ra], [dec-perc*dec, dec+perc*dec]], args=[ALS])
-        print(out)
-        # print(self.size - out['fun'])
-    """
 
     def display(self):
         print("Catalog: %s sources: %i"%(self, len(self.sourcelist)))
@@ -289,11 +261,28 @@ class CATALOG(object):
         #Func: creates ds9 region file in WCS degrees
         if not os.path.isdir('out'):
             os.system('mkdir out/')
-        with open("out/%s.reg"%self.name[:-4],'w') as outcat:
+        with open("out/%s.reg"%self.name[:-4],'w') as outreg:
             logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s.reg"%self.name[:-4])
             for s in self.sourcelist:
-                outcat.write("circle(%fd, %fd, 10)\n"%(s.RA, s.DEC))
+                outreg.write("circle(%fd, %fd, 10)\n"%(s.RA, s.DEC))
 
+    def exportcat(self):
+        if not os.path.isdir('out'):
+            os.system('mkdir out/')
+        with open("out/%s"%self.name, 'w') as outcat:
+            logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s"%self.name)
+            outcat.write("ID RA DEC ")
+            for i in range(1, self.sourcelist[0].numBands+1):
+                outcat.write("FLUX%d FLUXERR%d "%(i,i))
+            for i in range(1, self.sourcelist[0].numBands+1):
+                outcat.write("MAG%d MAGERR%d "%(i,i))
+            outcat.write('\n')
+            for i, s in enumerate(self.sourcelist,1):
+                outcat.write("%d %s\n"%(i,s.createExportString()))
+
+    def cut_lowconfidence(self):
+        self.sourcelist = [s for s in self.sourcelist if s.quality]
+        
 
 
 

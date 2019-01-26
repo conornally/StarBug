@@ -2,3 +2,5 @@ test/
 *.fits
 *.pyc
 src/tmp
+discard/
+out/
