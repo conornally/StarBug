@@ -470,6 +470,7 @@ class StarBug:
 
     def complete(self, text, state):
         if self.complete_style == "PATH":
+            text = [t for t in text.split(' ')][-1]
             self.complete_list = glob.glob(text+"*")
         for cmd in self.complete_list:
             if cmd.startswith(text):
@@ -490,7 +491,7 @@ class StarBug:
     def mainloop(self):
         print('\x1b[u\x1b[1;36mHello! Welcome to \x1b[1;32mStarBug\x1b[0m\n')
         command=self.manual
-        readline.set_completer_delims('')
+        readline.set_completer_delims(' ')
         #readline.set_completer_delims(' \t\n;')
         readline.parse_and_bind("tab: complete")
         readline.set_completer(self.complete)
