@@ -276,6 +276,14 @@ class FITS(object):
         elif scale=='median': factor = np.nanmedian(self.data)
         self.data = np.divide(self.data, factor, dtype=self.data.dtype)
 
+    def normaliseEXPTIME(self, etime=1):
+        if 'EXPTIME' in self.header:
+            self.data /= float(self.header['EXPTIME'])
+            self.header['EXPTIME'] = 1.0
+        else:
+            self.data /= etime
+            self.header['EXPTIME'] = 1.0
+
     def sigma_clip(self, sigma):
         """
         INPUT: sigma value, above which will be cut

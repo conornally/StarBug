@@ -27,6 +27,7 @@ class StarBug:
                         'catcombine':self.catcombine,
                         'bandmatch': self.bandMatch,
                         'epochmatch':self.epochMatch,
+                        'tilematch': self.tileMatch,
                         'catdisplay': self.catdisplay,
                         'exportregion': self.exportRegion,
                         'savecat':self.exportcat,
@@ -38,6 +39,7 @@ class StarBug:
                         'update_header': self.update_header,
                         'dtype': self.convert_dtype,
                         'scale': self.scale,
+                        'normaliseTIME': self.normaliseEXPTIME,
                         'add': self.add,
                         'cut_below':self.cut_below,
                         # io
@@ -142,6 +144,13 @@ class StarBug:
         for f in self.get_group("group to scale> "):
             f.scale(a)
 
+    def normaliseEXPTIME(self):
+        group = self.get_group()
+        if group:
+            for f in group:
+                logging.info("normalising %s: exptime %s"%(f,f.header['EXPTIME']))
+                f.normaliseEXPTIME()
+
     def add(self):
         group = self.get_group()
         a = float(self.readin("+ "))
@@ -190,6 +199,12 @@ class StarBug:
         cat1 = self.get_cat("Name of first loaded catalog >> ")
         cat2 = self.get_cat("Name of second loaded catalog >> ")
         cat1.EpochMatch(cat2)
+
+    def tileMatch(self):
+        cat1 = self.get_cat("Name of first loaded catalog >> ")
+        cat2 = self.get_cat("Name of second loaded catalog >> ")
+        cat1.TileMatch(cat2)
+
 
     def catdisplay(self):
         cat = self.get_cat()

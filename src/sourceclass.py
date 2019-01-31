@@ -96,6 +96,9 @@ class Source(object):
         self.rnd = np.stack((self.rnd, source.rnd)) 
     
         self.numEpochs +=1
+
+    def append_Tile(self, source=False, bad=False):
+        self.append_Epoch(source, bad) # for now it just does the same, but perhaps in the future ill want to change that
         
     def createExportString(self):
         self.set_means()

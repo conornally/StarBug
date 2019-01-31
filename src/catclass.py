@@ -211,10 +211,15 @@ class CATALOG(object):
         for s in self.sourcelist: s.set_means()
         self.match(CAT, regime='epoch')
 
-    def match(self, CAT, regime='epoch'):
+    def TileMatch(self, CAT):
+        logging.info("\x1b[1;33mMATCHING\x1b[0m Tiles: %s <-- %s"%(self, CAT))
+        for s in self.sourcelist: s.set_means()
+        self.match(CAT, regime='tile')
+
+    def match(self, CAT, regime='band'):
         """
         INPUT: >List or single instance of ALS_DATA(), 
-               >regime is 'band' or 'epoch' matching
+               >regime is 'band' or 'epoch' matching 'tile'
                >> for now, i think all epoch matching should be done first
         FUNC: adds additional data onto the sources in l=source list
         (should i retake averages inbetween matches?)
@@ -238,10 +243,19 @@ class CATALOG(object):
                     if d2d[i] == min(d2d[np.where( idx==IDX)]):
                         if regime=='epoch': self.sourcelist[i].append_Epoch(cat.sourcelist[IDX])
                         elif regime=='band': self.sourcelist[i].append_Band(cat.sourcelist[IDX])
+                        elif regime=='tile': self.sourcelist[i].append_Tile(cat.sourcelist[IDX])
                         self.sourcelist[i].quality= True
                 if((i in bad) and True):
                     if regime=='epoch': self.sourcelist[i].append_Epoch(bad=True)
                     elif regime=='band': self.sourcelist[i].append_Band(bad=True)
+                    elif regime=='tile':
+                        self.sourcelist[i].append_Tile(bad=True)
+                        #cat.sourcelist[IDX].append_Tile(bad=True)
+                        #self.sourcelist = np.append(self.sourcelist, cat.sourcelist[IDX] )
+            if regime=='tile':
+                for i in range(len(cat.sourcelist)):
+                    if i not in idx:
+                        self.sourcelist = np.append(self.sourcelist, cat.sourcelist[i])
                 #If i dont crop out the bad sources i will NEED to append 9999 values to sourcelist objects..
             #self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
@@ -253,7 +267,7 @@ class CATALOG(object):
 
     def display(self):
         print("Catalog: %s sources: %i"%(self, len(self.sourcelist)))
-        for i in range(10):
+        for i in range(len(self.sourcelist)):
             if i<len(self.sourcelist):
                 print(self.sourcelist[i])
 
