@@ -391,7 +391,7 @@ class FITS(object):
         if filename=='': 
            filename = self.filename
         logging.info('\x1b[1;33mEXPORTING\x1b[0m: %s --> %s'%(self, filename))
-        fits.PrimaryHDU(data=self.data, header=self.header).writeto(filename, overwrite=overwrite)
+        fits.PrimaryHDU(data=self.data, header=self.header).writeto(filename)
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
