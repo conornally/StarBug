@@ -4,11 +4,16 @@ sys.stdout.flush()
 import logging, readline, glob
 
 
-from fitsclass import FITS
-from catclass import CATALOG
-from sourceclass import Source
-from common_tasks import *
-import parse_config as parse_config
+try:from fitsclass import FITS
+except: from src.fitsclass import FITS
+try:from catclass import CATALOG
+except:from src.catclass import CATALOG
+try: from sourceclass import Source
+except: from src.sourceclass import Source
+try: from common_tasks import *
+except: from src.common_tasks import *
+try: import parse_config as parse_config
+except: import src.parse_config as parse_config
 
 logging.basicConfig( level='DEBUG', format="%(message)s")
 class StarBug:
@@ -405,11 +410,14 @@ class StarBug:
 
     def terminal(self):
         print('Entering Terminal Mode. To exit type "EXIT"')
+        self.complete_style= 'PATH'
         while True:
             cmd=self.readin('$~ ')
             if cmd=='EXIT': break
             else: os.system(cmd)
+            #else:subprocess.call(cmd)
         print('Terminal Mode Exitted')
+        self.reset_completer()
 
     def display_options(self):
         """
