@@ -117,12 +117,13 @@ class Source(object):
                     exportstring += "%f "%self.get_Value('fluxerr', epoch, band)
                     exportstring += "%f "%self.get_Value('mag', epoch, band)
                     exportstring += "%f "%self.get_Value('magerr', epoch, band)
+        zero2nan = lambda x: np.nan if x==0 else x
         if(style=='mean tiles'):
             for band in range(self.size[1]):
-                exportstring += "%f "%self.FLUX[band]
-                exportstring += "%f "%self.FLUXERR[band]
-                exportstring += "%f "%self.MAG[band]
-                exportstring += "%f "%self.MAGERR[band]
+                exportstring += "%f "%zero2nan(self.FLUX[band])
+                exportstring += "%f "%zero2nan(self.FLUXERR[band])
+                exportstring += "%f "%zero2nan(self.MAG[band])
+                exportstring += "%f "%zero2nan(self.MAGERR[band])
 
 
         return exportstring
