@@ -108,7 +108,7 @@ class CATALOG(object):
         """
         self.cat = np.zeros((len(self.sourcelist), 2))
         for i,s in enumerate(self.sourcelist):
-            s.set_means()
+            s._voidCalcTileMeans()
             self.cat[i]=[s.RA, s.DEC]
         self.cat = SkyCoord( ra=Angle( self.cat[:,0], unit=u.deg), dec=Angle( self.cat[:,1], unit=u.deg) )
 
@@ -196,7 +196,7 @@ class CATALOG(object):
         logging.info("CROPPING: %s"%self) 
         old = self.size
         for s in self.sourcelist:
-            s.set_means()   #this sloooows things down a lot 
+            s._voidCalcTileMeans()
             if s.MAGERR > self.config['Mag Error']: s.quality = False
             elif s.MAG > self.config['Max Mag']: s.quality = False
             elif s.MAG < self.config['Min Mag']: s.quality = False
@@ -221,17 +221,17 @@ class CATALOG(object):
 
     def BandMatch(self, CAT):
         logging.info("\x1b[1;33mMATCHING\x1b[0m Bands: %s <-- %s"%(self, CAT))
-        for s in self.sourcelist: s.set_means()
+        for s in self.sourcelist: s._voidCalcTileMeans()
         self.match(CAT, regime='band')
         
     def EpochMatch(self, CAT):
         logging.info("\x1b[1;33mMATCHING\x1b[0m Epochs: %s <-- %s"%(self, CAT))
-        for s in self.sourcelist: s.set_means()
+        for s in self.sourcelist: s._voidCalcTileMeans()
         self.match(CAT, regime='epoch')
 
     def TileMatch(self, CAT):
         logging.info("\x1b[1;33mMATCHING\x1b[0m Tiles: %s <-- %s"%(self, CAT))
-        for s in self.sourcelist: s.set_means()
+        for s in self.sourcelist: s._voidCalcTileMeans()
         self.match(CAT, regime='tile')
 
     def match(self, CAT, regime='band'):
@@ -249,7 +249,7 @@ class CATALOG(object):
             logging.info('...%s'%cat)
             radec = np.array( [ [s.RA, s.DEC ] for s in self.sourcelist])
             radec = SkyCoord( ra=Angle( radec[:,0], unit=u.deg), dec=Angle( radec[:,1], unit=u.deg) )
-            for s in cat.sourcelist: s.set_means()
+            for s in cat.sourcelist: s._voidCalcTileMeans()
             catradec = np.array( [ [s.RA, s.DEC] for s in cat.sourcelist] )
             catradec = SkyCoord( ra=Angle( catradec[:,0], unit=u.deg), dec=Angle( catradec[:,1], unit=u.deg) )
             
@@ -276,7 +276,7 @@ class CATALOG(object):
                         self.sourcelist = np.append(self.sourcelist, cat.sourcelist[i])
                 #If i dont crop out the bad sources i will NEED to append 9999 values to sourcelist objects..
             #self.sourcelist = [s for s in self.sourcelist if s.quality]
-            for s in self.sourcelist: s.set_means()
+            for s in self.sourcelist: s._voidCalcTileMeans()
             logging.info("Sources: %d"%len(self.sourcelist))
             logging.info("Not Matched: %d"%len(bad))
 
@@ -301,9 +301,20 @@ class CATALOG(object):
     def exportcat(self):
         if not os.path.isdir('out'):
             os.system('mkdir out/')
+        outfile = "out/%s.sb"%self.name[:-4]
+        with open(outfile, 'w') as outcat:
+            outcat.write("ID RA DEC ")
+            for b in range(self.sourcelist[0].size[1]):
+                outcat.write("FLUX:%d "%b )
+                outcat.write("FLUXERR:%d "%b )
+                outcat.write("MAG:%d "%b )
+                outcat.write("MAGERR:%d "%b )
+            for i,s in enumerate(self.sourcelist,1):
+                outcat.write("\n%d %s"%(i, s.createExportString(style='mean tiles')))
+        """
         with open("out/%s.sb"%self.name[:-4], 'w') as outcat:
             logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s.sb"%self.name[:-4])
-            outcat.write("ID RA DEC ")
+            outcat.write("ID RA DEC")
             for e in range(1, self.sourcelist[0].numEpochs+1):
                 for i in range(1, self.sourcelist[0].numBands+1):
                     #outcat.write("FLUX%d FLUXERR%d "%(i,i))
@@ -315,6 +326,7 @@ class CATALOG(object):
             outcat.write('\n')
             for i, s in enumerate(self.sourcelist,1):
                 outcat.write("%d %s\n"%(i,s.createExportString(full=True)))
+        """
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
@@ -328,4 +340,5 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884_g.sb')
+    cat = CATALOG(catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
+    cat.exportcat()

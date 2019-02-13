@@ -1,5 +1,10 @@
 # Todo
 
+>catclass load sb files
+>catclass combine tile/epoch values
+
+
+
 work on todo list
 
 main file:
