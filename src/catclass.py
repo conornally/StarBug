@@ -34,9 +34,13 @@ class CATALOG(object):
         self.configfile = configfile
         if hasattr(self, 'fits'): self.loadconfig() #FOR NOW!! need to allow not including fits properlly
 
-        self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
-        self.sourcelist = np.empty( (len(self.raw_data)), dtype=object)
-        self.build_sourcelist()
+        if(catalog_style=="starbug"):
+            self.sourcelist = self._loadStarBugData(catalog_filename)
+
+        else:
+            self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
+            self.sourcelist = np.empty( (len(self.raw_data)), dtype=object)
+            self.build_sourcelist()
 
         name = catalog_filename
         while '/' in name: name = name[name.index('/')+1:]
@@ -51,6 +55,7 @@ class CATALOG(object):
         delimiter=None
         comments='#'
 
+            
         if(catalog_style=='sextractor'):
             ID = 0
             flux = 1
@@ -91,6 +96,11 @@ class CATALOG(object):
         raw_data[:,7] = load_in_data[:,mag]
         raw_data[:,8] = load_in_data[:,magerr]
         return raw_data
+
+    def _loadStarBugData(self, filename):
+        with open(filename) as title:
+            print(title.readline())
+        print(np.genfromtxt(filename,skip_header=1))
 
     def setup(self):
         """
@@ -291,24 +301,24 @@ class CATALOG(object):
     def exportcat(self):
         if not os.path.isdir('out'):
             os.system('mkdir out/')
-        with open("out/%s"%self.name, 'w') as outcat:
-            logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s"%self.name)
+        with open("out/%s.sb"%self.name[:-4], 'w') as outcat:
+            logging.info("\x1b[1;33mWRITING\x1b[0m: to out/%s.sb"%self.name[:-4])
             outcat.write("ID RA DEC ")
-            for i in range(1, self.sourcelist[0].numBands+1):
-                outcat.write("FLUX%d FLUXERR%d "%(i,i))
-            for i in range(1, self.sourcelist[0].numBands+1):
-                outcat.write("MAG%d MAGERR%d "%(i,i))
+            for e in range(1, self.sourcelist[0].numEpochs+1):
+                for i in range(1, self.sourcelist[0].numBands+1):
+                    #outcat.write("FLUX%d FLUXERR%d "%(i,i))
+                    outcat.write(" flux[e%d:b%d] fluxerr[e%d:b%d]"%(e,i,e,i))
+            for e in range(1, self.sourcelist[0].numEpochs+1):
+                for i in range(1, self.sourcelist[0].numBands+1):
+                    #outcat.write("MAG%d MAGERR%d "%(i,i))
+                    outcat.write(" mag[e%d:b%d] magerr[e%d:b%d]"%(e,i,e,i))
             outcat.write('\n')
             for i, s in enumerate(self.sourcelist,1):
-                outcat.write("%d %s\n"%(i,s.createExportString()))
+                outcat.write("%d %s\n"%(i,s.createExportString(full=True)))
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
         
-
-
-
-
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
@@ -317,5 +327,5 @@ class CATALOG(object):
 
 
 if __name__=='__main__':
-    cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    print(cat)
+    #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884_g.sb')

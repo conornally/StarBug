@@ -124,7 +124,24 @@ class Source(object):
         exportstring="%f %f"%(self.RA, self.DEC)
 
         if full:
-            pass
+            true = lambda val: val if not np.isnan(val) else 9999.9999
+            for epoch in range(self.numEpochs):
+                for band in range(self.numBands):
+                    if((self.numEpochs>1) and (self.numBands>1)):
+                        exportstring += " %f %f"%(true(self.flux[epoch, band]), true(self.fluxerr[epoch, band]))
+                    elif(self.numEpochs>1):
+                        exportstring += " %f %f"%(true(self.flux[epoch]), true(self.fluxerr[epoch]))
+                    elif(self.numBands>1):
+                        exportstring += " %f %f"%(true(self.flux[band]), true(self.fluxerr[band]))
+
+            for epoch in range(self.numEpochs):
+                for band in range(self.numBands):
+                    if((self.numEpochs>1) and (self.numBands>1)):
+                        exportstring += " %f %f"%(true(self.mag[epoch, band]), true(self.magerr[epoch, band]))
+                    elif(self.numEpochs>1):
+                        exportstring += " %f %f"%(true(self.mag[epoch]), true(self.magerr[epoch]))
+                    elif(self.numBands>1):
+                        exportstring += " %f %f"%(true(self.mag[band]), true(self.magerr[band]))
         else:
             for band in range(self.numBands):
                 exportstring += " %f %f"%(self.FLUX[band], self.FLUXERR[band])
@@ -143,10 +160,10 @@ if __name__=='__main__':
     s4 = Source(ra=0,dec=0,flux=22, fluxerr=2)
     s1.append_Band(s2)
     print("AfterBand before Epoch", s1.flux)
-    print(s1.createExportString())
+    print(s1.createExportString(full=True))
     s3.append_Band(s4)
     s1.append_Epoch(s3)
     
     print("AfterBand after Epoch", s1.flux)
-    print(s1.createExportString())
+    print(s1.createExportString(full=True))
     s1.set_means()

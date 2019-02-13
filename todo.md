@@ -15,7 +15,7 @@ fitsclass.py
 alsclass.py:
 > need to make sure that if i was to do any python based photometry, it would be able to handle not being taken from a file
 > maybe a subclass?
-> als2reg
+> scrap (for now all catalog exporting compression) just export the whole thing
 
 fileio.py:
 this is a os wrapper around the classes, ideally the classes wont have to know where to put things themselves //keep it general
