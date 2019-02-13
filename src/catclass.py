@@ -35,7 +35,7 @@ class CATALOG(object):
         if hasattr(self, 'fits'): self.loadconfig() #FOR NOW!! need to allow not including fits properlly
 
         if(catalog_style=="starbug"):
-            self.sourcelist = self._loadStarBugData(catalog_filename)
+            self._loadStarBugData(catalog_filename)
 
         else:
             self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
@@ -98,9 +98,28 @@ class CATALOG(object):
         return raw_data
 
     def _loadStarBugData(self, filename):
-        with open(filename) as title:
-            print(title.readline())
-        print(np.genfromtxt(filename,skip_header=1))
+        """TEMPORARY FIX
+            loads in starbug *.sb files, but only with export(style=mean tiles) for now
+        """
+        with open(filename,'r') as catalog:
+            name= catalog.readline().split(' ')
+            length= int(catalog.readline().split(' ')[-1])
+            numEpochs = int(catalog.readline().split(' ')[-1])
+            numBands = int(catalog.readline().split(' ')[-1])
+            self.sourcelist = np.empty((length), dtype=object)
+            flux = [ 4*i + 3 for i in range(numBands)]
+            fluxerr = [ 4*i + 4 for i in range(numBands)]
+            mag = [ 4*i + 5 for i in range(numBands)]
+            magerr = [ 4*i + 6 for i in range(numBands)]
+        data = np.genfromtxt(filename, skip_header=5)
+        for i, line in enumerate(data):
+            self.sourcelist[i] = Source(ID=i, ra=line[1], dec=line[2],
+                                        flux=line[flux], fluxerr=line[fluxerr],
+                                        mag=line[mag], magerr=line[magerr],
+                                        epochs=numEpochs, bands=numBands)
+        print(self.sourcelist[0])
+
+            
 
     def setup(self):
         """
@@ -303,6 +322,10 @@ class CATALOG(object):
             os.system('mkdir out/')
         outfile = "out/%s.sb"%self.name[:-4]
         with open(outfile, 'w') as outcat:
+            outcat.write("#Catalog name: %s\n"%self.name)
+            outcat.write("#Data Length: %s\n"%len(self.sourcelist))
+            outcat.write("#Number Epochs/Tiles: %d\n"%self.sourcelist[0].size[0])
+            outcat.write("#Number Bands: %d\n"%self.sourcelist[0].size[1])
             outcat.write("ID RA DEC ")
             for b in range(self.sourcelist[0].size[1]):
                 outcat.write("FLUX:%d "%b )
@@ -340,5 +363,4 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat.exportcat()
+    cat = CATALOG(catalog_style='starbug', catalog_filename='test/test.sb')

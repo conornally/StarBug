@@ -1,8 +1,7 @@
 # Todo
 
->catclass load sb files
->catclass combine tile/epoch values
-
+>catclass load sb files // done basic
+>need to fix sourceclass calling nan error = 0
 
 
 work on todo list
