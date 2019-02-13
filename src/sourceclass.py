@@ -36,11 +36,12 @@ class Source(object):
         self.DEC=       np.nanmean( self.dec)
         if self.numEpochs > 1:
             self.FLUX=      np.nanmean(self.flux,0)
-            self.FLUXERR=   np.nanmean(self.fluxerr,0)
+            #self.FLUXERR=   np.nanmean(self.fluxerr,0)
             self.MAG=       np.nanmean( self.mag,0)
-            self.MAGERR=    np.nanmean( self.magerr,0)
+            #self.MAGERR=    np.nanmean( self.magerr,0)
             self.SHARP=     np.nanmean(self.shp,0)
             self.ROUND=     np.nanmean(self.rnd,0)
+            self.calc_errors()
         else:
             self.FLUX=      self.flux
             self.FLUXERR=   self.fluxerr
@@ -48,6 +49,24 @@ class Source(object):
             self.MAGERR=    self.magerr
             self.SHARP=     self.shp
             self.ROUND=     self.rnd
+
+    def calc_errors(self):
+        #across epochs
+        df_dxi = 1./self.numEpochs
+        dxi = lambda xi: (df_dxi**2.)*(xi**2.)
+        for band in range(self.numBands):
+
+            for epoch in range(self.numEpochs):
+                pass
+
+
+
+            self.FLUXERR[band] = np.sqrt(sum([ dxi(xi) for xi in self.fluxerr[:,band]]))
+            self.MAGERR[band] = np.sqrt(sum([ dxi(xi) for xi in self.magerr[:,band]]))
+
+
+
+
     def append_Band(self, source=False, bad=False):
         """
         INPUT: instance of Source()
@@ -100,19 +119,34 @@ class Source(object):
     def append_Tile(self, source=False, bad=False):
         self.append_Epoch(source, bad) # for now it just does the same, but perhaps in the future ill want to change that
         
-    def createExportString(self):
+    def createExportString(self, full=False):
         self.set_means()
         exportstring="%f %f"%(self.RA, self.DEC)
 
-        for band in range(self.numBands):
-            exportstring += " %f %f"%(self.FLUX[band], self.FLUXERR[band])
-        for band in range(self.numBands):
-            exportstring += " %f %f"%(self.MAG[band], self.MAGERR[band])
+        if full:
+            pass
+        else:
+            for band in range(self.numBands):
+                exportstring += " %f %f"%(self.FLUX[band], self.FLUXERR[band])
+            for band in range(self.numBands):
+                exportstring += " %f %f"%(self.MAG[band], self.MAGERR[band])
         return exportstring
 
     def __repr__(self):
         #return("\x1b[1;32m%s\x1b[0m: %.4f %.4f %.4f"%(self.ID, self.RA[0], self.DEC[0], self.MAG[0]))
-        return("\x1b[1;32m{}\x1b[0m: {} {} {}".format(self.ID, self.RA, self.DEC, self.MAG))
+        return("\x1b[1;32m{}\x1b[0m: {} {} {} {}".format(self.ID, self.RA, self.DEC, self.MAG, self.MAGERR))
 
 if __name__=='__main__':
-    pass
+    s1 = Source(ra=0,dec=0,flux=11, fluxerr=1)
+    s2 = Source(ra=0,dec=0,flux=12, fluxerr=1)
+    s3 = Source(ra=0,dec=0,flux=21, fluxerr=2)
+    s4 = Source(ra=0,dec=0,flux=22, fluxerr=2)
+    s1.append_Band(s2)
+    print("AfterBand before Epoch", s1.flux)
+    print(s1.createExportString())
+    s3.append_Band(s4)
+    s1.append_Epoch(s3)
+    
+    print("AfterBand after Epoch", s1.flux)
+    print(s1.createExportString())
+    s1.set_means()

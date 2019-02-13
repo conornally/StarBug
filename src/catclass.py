@@ -200,6 +200,14 @@ class CATALOG(object):
         logging.info("Source: %d --> %d"%(old, self.size))
 
 
+    def NullMatch(self):
+        """FUNC: this is a temporary fix
+                 if ou do epoch/tile match on catalogs with different numbers of bands, it will cash as the arrays are different sizes
+                 this adds a completely NULL band onto the sourcelist
+        """
+        for i, source in enumerate(self.sourcelist):
+            source.append_Band(bad=True)
+            logging.debug(source)
 
     def BandMatch(self, CAT):
         logging.info("\x1b[1;33mMATCHING\x1b[0m Bands: %s <-- %s"%(self, CAT))
@@ -260,7 +268,7 @@ class CATALOG(object):
             #self.sourcelist = [s for s in self.sourcelist if s.quality]
             for s in self.sourcelist: s.set_means()
             logging.info("Sources: %d"%len(self.sourcelist))
-            logging.info(len(bad))
+            logging.info("Not Matched: %d"%len(bad))
 
     def single_match(self, cat):
         return match_coordinates_sky(self.cat, cat)

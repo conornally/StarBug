@@ -30,6 +30,7 @@ class StarBug:
                         # catalog stuff
                         'loadcat': self.loadcat,
                         'catcombine':self.catcombine,
+                        'nullmatch': self.nullmatch,
                         'bandmatch': self.bandMatch,
                         'epochmatch':self.epochMatch,
                         'tilematch': self.tileMatch,
@@ -190,6 +191,10 @@ class StarBug:
         cat1 = self.get_cat("Name of first loaded catalog >> ")
         cat2 = self.get_cat("Name of second loaded catalog >> ")
         cat1.combine(cat2)
+
+    def nullmatch(self):
+        cat = self.get_cat()
+        cat.NullMatch()
 
     def bandMatch(self):
         """FUNC: Match two catalogs of different bands/filters
