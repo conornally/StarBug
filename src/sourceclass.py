@@ -9,7 +9,7 @@ class Source(object):
                         shp=np.nan, rnd=np.nan,
                         bands=1, epochs=1):
         shape = np.ones((epochs, bands))
-        self.ID =       ID *shape
+        self.ID =       ID
         self.x =        x*shape
         self.y =        y*shape
         self.ra=        ra*shape
@@ -21,7 +21,7 @@ class Source(object):
         self.shp=       shp*shape
         self.rnd=       rnd*shape
 
-
+        self.colours = np.zeros(2)
         self.size = np.shape(self.mag)
 
         self._voidCalcTileMeans()
@@ -57,6 +57,13 @@ class Source(object):
                 returnVal = getattr(self, key)[epoch, band]
         return returnVal 
 
+    def construct_colours(self, c1=[0,1], c2=[1,2]):
+        self.colours[0] = self.MAG[c1[0]] - self.MAG[c1[1]]
+        self.colours[1] = self.MAG[c2[0]] - self.MAG[c2[1]]
+
+    def set_colours(self, colour1=0, colour2=0):
+        self.colours[0] = colour1
+        self.colours[1] = colour2
 
     def append_Band(self, source=False, bad=False):
         """
@@ -139,16 +146,14 @@ class Source(object):
         return("\x1b[1;32m{}\x1b[0m: {} {} {} {}".format(self.ID, self.RA, self.DEC, self.MAG, self.MAGERR))
 
 if __name__=='__main__':
-    s1 = Source(ra=0,dec=0,flux=11, fluxerr=1, mag=1)
+    s1 = Source(ra=0,dec=0,flux=11, fluxerr=1, mag=2, magerr=1)
     s2 = Source(ra=0,dec=0,flux=12, fluxerr=1, mag=1, magerr=1)
-    s3 = Source(ra=0,dec=0,flux=21, fluxerr=3, mag=2, magerr=2)
-    s4 = Source(ra=0,dec=0,flux=22, fluxerr=3, mag=2, magerr=2)
+    s3 = Source(ra=0,dec=0,flux=21, fluxerr=3, mag=0, magerr=1)
 
     s1.append_Band(s2)
-    s3.append_Band(s4)
+    s1.append_Band(s3)
 
-    s1.append_Epoch(s3)
-    print(s1.magerr)
-    s1.calc_errors()
-    print(s1.MAGERR)
+    s1.construct_colours([2,1],[1,0])
+    s1.set_colours(1,1)
+    print(s1.colours)
 

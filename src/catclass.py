@@ -1,6 +1,7 @@
 import os, numpy as np, logging, time
 np.warnings.filterwarnings('ignore')
 from scipy import optimize
+import matplotlib.pyplot as plt
 
 from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
 import astropy.units as u
@@ -36,6 +37,9 @@ class CATALOG(object):
 
         if(catalog_style=="starbug"):
             self._loadStarBugData(catalog_filename)
+        
+        elif(catalog_style=='pleiades'):
+            self.edgecase_constructPleiades()
 
         else:
             self.raw_data = self.construct_raw_data(catalog_style, catalog_filename, catalog)
@@ -45,6 +49,20 @@ class CATALOG(object):
         name = catalog_filename
         while '/' in name: name = name[name.index('/')+1:]
         self.name = name
+
+    def edgecase_constructPleiades(self, catalog_filename=''):
+        """
+        THis is temporary
+        Constructs pleides mainsequence data catalog, with colours not mags
+        should i have colours in source?
+        """
+        data = np.genfromtxt("catalogs/pleiades_sloane")[:10]
+        print(data.shape)
+        self.sourcelist = np.empty(len(data), dtype=object)
+        for i, line in enumerate(data):
+            self.sourcelist[i] = Source(mag=line[2:], bands=2)
+            self.sourcelist[i].set_colours(line[0], line[1])
+        print(self.sourcelist)
 
     def construct_raw_data(self, catalog_style='custom', catalog_filename='', catalog=None):
         """INPUT: same as __init__
@@ -68,6 +86,7 @@ class CATALOG(object):
             y = 8
             skip_header = 9
             #skip_footer = 0
+        
         else: #custom
             ID =    get_value('IDcol',      configfile=self.configfile, dtype=int)
             flux =  get_value('Fluxcol',    configfile=self.configfile, dtype=int)
@@ -117,7 +136,6 @@ class CATALOG(object):
                                         flux=line[flux], fluxerr=line[fluxerr],
                                         mag=line[mag], magerr=line[magerr],
                                         epochs=numEpochs, bands=numBands)
-        print(self.sourcelist[0])
 
             
 
@@ -182,7 +200,14 @@ class CATALOG(object):
             self.size = len(self.sourcelist)
             logging.info("COMBINING: {} += {} --> Sources: {}".format(self, cat, self.size))
 
-    def calibrate(self, unitscale='None'):
+    def calibrate(self):
+        """
+        TEMP
+        """
+        logging.info('This is not implemented')
+
+
+    def xcalibrate(self, unitscale='None'):
         """
         >Converts DN/s to mJy //needs to be generalised
         >Applies colour correction
@@ -191,12 +216,14 @@ class CATALOG(object):
         """
         logging.info('CALIBRATING: %s'%self)
 
+        """
         DN2MJy = self.fits.header['FLUXCONV'] / self.fits.header['EXPTIME']
         MJy2mJy = (1e9/4.254517e10)*(self.fits.header['PXSCAL1']**2.)
 
         factor=1. 
         if unitscale =='Dns-1_mJy':
             factor = DN2MJy * MJy2mJy 
+        """
 
         ZP_Flux = self.config['ZP_Flux']
         ZP_ERR = self.config['ZP_ERR']
@@ -351,6 +378,66 @@ class CATALOG(object):
             for i, s in enumerate(self.sourcelist,1):
                 outcat.write("%d %s\n"%(i,s.createExportString(full=True)))
         """
+    def dustCorrection(self):
+        U = 0.3543 #um
+        G = 0.4770 #um
+        R = 0.6231 #um
+
+        X = 0.44
+
+
+        logging.info("dust correction")
+        mainsequence = np.genfromtxt("catalogs/pleiades_sloane")
+        mask = ( mainsequence[:,1]<0.7)
+        mainsequence = mainsequence[mask]
+        coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
+        x=np.arange(-0.3,0.75,0.001)
+        y=np.polyval(coeffs, x)
+        
+        #(U-G)o = ms[:,0]
+        #(G-R)o = ms[:,1]
+        #plt.scatter( mainsequence[:,1], -mainsequence[:,0])
+        #plt.plot(x,-y,c='r')
+        
+        #Fitug = (U-G)sb - X1Av
+        #Fitgr = (G-R)sb - X2Av
+
+        C1 = 1
+        C2 = 1
+
+        Av = np.arange(0,5,0.01)
+        Chivals = np.zeros(Av.shape)
+        print(self.a(1./X))
+        print(self.b(1./X))
+        for i, av in enumerate(Av):
+            for s in self.sourcelist:
+                s.construct_colours([2,1],[1,0])
+
+                #plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
+        
+        #plt.show()
+        #(u-g)o
+        #(g-r)o
+        #(u-g)MS
+        #(g-r)MS
+
+
+    def a(self, x):
+        x-=1.82
+        #coeffs = [1, 0.17699, -0.5044, -0.02427, 0.72085, 0.01979, -0.77530, 0.32999]
+        coeffs = [0.32999, -0.77530, 0.01979, 0.72085, -0.02427, -0.50447, 0.17699, 1.0]
+        return np.polyval(coeffs, x)
+
+    def b(self, x):
+        x-=1.82
+        coeffs = [-2.09002, 5.30260, -0.62251, -5.38434, 1.07233, 2.28305, 1.41338, 0]
+        return np.polyval(coeffs, x)
+
+
+
+
+
+
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
@@ -364,4 +451,7 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='test/test.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='test/ngc884.sb')
+    #cat = CATALOG(catalog_style='pleiades')
+
+    cat.dustCorrection()

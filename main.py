@@ -13,7 +13,8 @@ args = parser.parse_args()
 starbug = StarBug()
 if args.CATALOGS:
     for i, cat in enumerate(args.CATALOGS):
-        starbug._loadcatAUTO('autocat%d'%i, cat, '', 'custom') #change to custom
+        try: starbug._loadcatAUTO('autocat%d'%i, cat, '', 'starbug') #change to custom
+        except: starbug._loadcatAUTO('autocat%d'%i, cat, '', 'custom') #change to custom
 
 if args.FITSFILES: print(args.FITSFILES)
 
