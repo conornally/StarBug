@@ -378,13 +378,19 @@ class CATALOG(object):
             for i, s in enumerate(self.sourcelist,1):
                 outcat.write("%d %s\n"%(i,s.createExportString(full=True)))
         """
+
     def dustCorrection(self):
         U = 0.3543 #um
         G = 0.4770 #um
         R = 0.6231 #um
 
-        X = 0.44
+        Rv= 3.1
 
+        Cu = self.a(U) + self.b(U)/Rv
+        Cg = self.a(G) + self.b(G)/Rv
+        Cr = self.a(R) + self.b(R)/Rv
+
+        print(Cu, Cg, Cr)
 
         logging.info("dust correction")
         mainsequence = np.genfromtxt("catalogs/pleiades_sloane")
@@ -394,32 +400,26 @@ class CATALOG(object):
         x=np.arange(-0.3,0.75,0.001)
         y=np.polyval(coeffs, x)
         
-        #(U-G)o = ms[:,0]
-        #(G-R)o = ms[:,1]
-        #plt.scatter( mainsequence[:,1], -mainsequence[:,0])
-        #plt.plot(x,-y,c='r')
-        
-        #Fitug = (U-G)sb - X1Av
-        #Fitgr = (G-R)sb - X2Av
-
-        C1 = 1
-        C2 = 1
-
         Av = np.arange(0,5,0.01)
         Chivals = np.zeros(Av.shape)
-        print(self.a(1./X))
-        print(self.b(1./X))
         for i, av in enumerate(Av):
+            chi=0
             for s in self.sourcelist:
                 s.construct_colours([2,1],[1,0])
+                #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
+                s.colours[0]+=((Cu-Cg)*av)
+                s.colours[1]+=((Cg-Cr)*av)
+                if(np.isfinite(sum(s.colours))):
+                    chi+= ((s.colours[0] - np.polyval(coeffs, s.colours[1]))/(1))**2.0
+            Chivals[i] = chi
+        print(Chivals)
+        print(Av[np.argmin(Chivals)])
+        plt.plot(Av, np.log(Chivals))
+        plt.show()
 
                 #plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
         
         #plt.show()
-        #(u-g)o
-        #(g-r)o
-        #(u-g)MS
-        #(g-r)MS
 
 
     def a(self, x):
@@ -452,6 +452,5 @@ class CATALOG(object):
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
     cat = CATALOG(catalog_style='starbug', catalog_filename='test/ngc884.sb')
-    #cat = CATALOG(catalog_style='pleiades')
 
     cat.dustCorrection()

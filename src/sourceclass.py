@@ -21,6 +21,8 @@ class Source(object):
         self.shp=       shp*shape
         self.rnd=       rnd*shape
 
+        self.resolved = self.mag / self.mag
+
         self.colours = np.zeros(2)
         self.size = np.shape(self.mag)
 
@@ -73,6 +75,7 @@ class Source(object):
         #for now, just ra
         if bad or not source:
             source = Source(bands=1, epochs=self.size[0])
+            source.resolved *=False
         else: self.resolved_in +=1
 
         self.x = np.concatenate((self.x, source.x),1)
@@ -86,6 +89,7 @@ class Source(object):
         self.shp = np.concatenate((self.shp, source.shp),1)
         self.rnd = np.concatenate((self.rnd, source.rnd),1)
 
+        self.resolved = np.concatenate((self.resolved, source.resolved ),1)
         self.size = np.shape(self.flux)
         self._voidCalcTileMeans()
 
@@ -97,6 +101,7 @@ class Source(object):
 
         if bad or not source:
             source = Source(bands=self.size[1], epochs=1)
+            source.resolved*=False
         else: self.resolved_in +=1
         self.x = np.concatenate((self.x, source.x),0)
         self.y = np.concatenate((self.y, source.y),0)
@@ -109,6 +114,7 @@ class Source(object):
         self.shp = np.concatenate((self.shp, source.shp),0) 
         self.rnd = np.concatenate((self.rnd, source.rnd),0) 
     
+        self.resolved = np.concatenate((self.resolved, source.resolved),0)
         self.size = np.shape(self.flux)
         self._voidCalcTileMeans()
 
@@ -150,10 +156,15 @@ if __name__=='__main__':
     s2 = Source(ra=0,dec=0,flux=12, fluxerr=1, mag=1, magerr=1)
     s3 = Source(ra=0,dec=0,flux=21, fluxerr=3, mag=0, magerr=1)
 
+    s = Source( mag=np.array([1,np.nan]), bands=2, epochs=1)
+    print(s.resolved)
+
     s1.append_Band(s2)
     s1.append_Band(s3)
+    s1.append_Band(bad=True)
+    s1.append_Epoch(bad=True)
+    print(np.sum(s1.resolved))
 
     s1.construct_colours([2,1],[1,0])
     s1.set_colours(1,1)
-    print(s1.colours)
 
