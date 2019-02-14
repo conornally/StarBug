@@ -35,6 +35,7 @@ class StarBug:
                         'epochmatch':self.epochMatch,
                         'tilematch': self.tileMatch,
                         'catdisplay': self.catdisplay,
+                        'catcalibrate': self.catcalibrate,
                         'exportregion': self.exportRegion,
                         'savecat':self.exportcat,
                         'confidence_cut':self.cat_cutlowconfidence,
@@ -214,6 +215,11 @@ class StarBug:
         cat1 = self.get_cat("Name of first loaded catalog >> ")
         cat2 = self.get_cat("Name of second loaded catalog >> ")
         cat1.TileMatch(cat2)
+
+    def catcalibrate(self):
+        """TESTING"""
+        cat = self.get_cat()
+        cat.calibrate()
 
 
     def catdisplay(self):

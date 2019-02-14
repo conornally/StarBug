@@ -182,7 +182,7 @@ class CATALOG(object):
             self.size = len(self.sourcelist)
             logging.info("COMBINING: {} += {} --> Sources: {}".format(self, cat, self.size))
 
-    def calibrate(self, units='Dns-1_mJy'):
+    def calibrate(self, unitscale='None'):
         """
         >Converts DN/s to mJy //needs to be generalised
         >Applies colour correction
@@ -193,8 +193,9 @@ class CATALOG(object):
 
         DN2MJy = self.fits.header['FLUXCONV'] / self.fits.header['EXPTIME']
         MJy2mJy = (1e9/4.254517e10)*(self.fits.header['PXSCAL1']**2.)
+
         factor=1. 
-        if units =='Dns-1_mJy':
+        if unitscale =='Dns-1_mJy':
             factor = DN2MJy * MJy2mJy 
 
         ZP_Flux = self.config['ZP_Flux']
