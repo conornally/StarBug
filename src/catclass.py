@@ -200,12 +200,13 @@ class CATALOG(object):
             self.size = len(self.sourcelist)
             logging.info("COMBINING: {} += {} --> Sources: {}".format(self, cat, self.size))
 
-    def calibrate(self):
+    def calibrate(self, zeropoints=[0]):
         """
         TEMP
         """
         logging.info('This is not implemented')
-
+        print(zeropoints)
+         
 
     def xcalibrate(self, unitscale='None'):
         """
@@ -409,8 +410,8 @@ class CATALOG(object):
                 #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
                 s.colours[0]+=((Cu-Cg)*av)
                 s.colours[1]+=((Cg-Cr)*av)
-                if(np.isfinite(sum(s.colours))):
-                    chi+= ((s.colours[0] - np.polyval(coeffs, s.colours[1]))/(1))**2.0
+                schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))/(1))**2.0
+                if(np.isfinite(schi)): chi+= schi
             Chivals[i] = chi
         print(Chivals)
         print(Av[np.argmin(Chivals)])
@@ -432,12 +433,6 @@ class CATALOG(object):
         x-=1.82
         coeffs = [-2.09002, 5.30260, -0.62251, -5.38434, 1.07233, 2.28305, 1.41338, 0]
         return np.polyval(coeffs, x)
-
-
-
-
-
-
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]

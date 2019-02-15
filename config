@@ -73,6 +73,10 @@ D1_1_03=
 
 
 #### CORRECTIONS ####
+Band0 Zero Point = 280900
+Band0 Zero Point Error = 4100
+Band0 Colour Correction = 1.0063
+
 Band1 Zero Point = 280900
 Band1 Zero Point Error = 4100
 Band1 Colour Correction = 1.0063

@@ -90,6 +90,31 @@ Prompts for filename (if nothing supplied, subtracts .fits off first fitsimage o
 
 Prompts offset filename (if nothing supplied, uses offsets stored in loaded group). Function stacks together the images based on their offsets, and crops the resulting data around non-fully fullfilled areas.
 
+## Catlogs
+
+The catalog features allow for general manipulations, matching, calibration etc.
+
+`> loadcat`
+
+Works much the same as `> load` except the user can only load one catalog at a time (is this a good thing?)
+
+`> bandmatch`
+
+Match two catalogs of different wavelenght bands together, the resulting catalog will have sources with lists containing the two bands
+
+`> epochmatch`
+
+Match two catalogs of different wavelenght epochs together, the resulting catalog will have sources with lists containing the two epochs
+
+`> tilematch`
+
+Much the same as `epochmatch` except it doesnt delete the unmatched stars, so will allow for stars apearing on only one tile. For now this option adds values to the sources like epoch match, and consequently EITHER tile match or epochmatch can be done, but not both
+
+`> nullmatch`
+
+THIS IS A BODGE, sometimes you have images in tiles but not all bands, so adding a nullband to the source is required to stop the script from crashing
+
+
 ## Analysis
 
 `> stats`
