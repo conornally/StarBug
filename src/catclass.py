@@ -265,7 +265,6 @@ class CATALOG(object):
         """
         for i, source in enumerate(self.sourcelist):
             source.append_Band(bad=True)
-            logging.debug(source)
 
     def BandMatch(self, CAT):
         logging.info("\x1b[1;33mMATCHING\x1b[0m Bands: %s <-- %s"%(self, CAT))

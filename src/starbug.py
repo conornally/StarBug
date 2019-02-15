@@ -20,6 +20,7 @@ class StarBug:
     def __init__(self):
         self.fitslist={'Flat':[], 'Dark':[]}
         self.cataloglist={}
+        self.userVariables={}
         self.commands ={'pre_adjust': self.pre_adjust,
                         'build_flat': self.build_flat,
                         'build_dark': self.build_dark,
@@ -39,6 +40,8 @@ class StarBug:
                         'exportregion': self.exportRegion,
                         'savecat':self.exportcat,
                         'confidence_cut':self.cat_cutlowconfidence,
+                        # variables
+                        'variable':self.addVariable,
                         # analysis
                         'stats': self.stats,
                         'find': self.find,
@@ -324,11 +327,22 @@ class StarBug:
         """FINAL catalog loading step
             has no manual inputs, so can load catalogs automatically
         """
+        logging.debug("Loading: %s"%catalog_filename)
         self.cataloglist[catname] = CATALOG(fitsfile=fitsfilename, catalog_style=catalog_style, catalog_filename=catalog_filename)
+
+
+    def addVariable(self):
+        """Add variables to starbug"""
+        name = str(self.readin("Variable Name >> "))
+        value= float(self.readin("Value >> "))
+        self.userVariables[name] = value
 
 
 
     def display_loaded(self):
+        print('\nUser Defined Variables')
+        for v in self.userVariables.items():
+            print("%s: %f"%(v[0], v[1]))
         print('\nLoaded FITS Files')
         for item in self.fitslist:
             print(item +str(':') + str(self.fitslist[item] ) )

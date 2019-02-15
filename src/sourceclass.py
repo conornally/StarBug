@@ -24,6 +24,7 @@ class Source(object):
         self.resolved = self.mag / self.mag
 
         self.colours = np.zeros(2)
+        self.colourError = np.zeros(2)
         self.size = np.shape(self.mag)
 
         self._voidCalcTileMeans()
@@ -60,8 +61,12 @@ class Source(object):
         return returnVal 
 
     def construct_colours(self, c1=[0,1], c2=[1,2]):
+        self._voidCalcTileMeans()
         self.colours[0] = self.MAG[c1[0]] - self.MAG[c1[1]]
         self.colours[1] = self.MAG[c2[0]] - self.MAG[c2[1]]
+        self.colourError[0] = np.sqrt( self.MAGERR[c1[0]]**2. +self.MAGERR[c1[1]]**2. )
+        self.colourError[1] = np.sqrt( self.MAGERR[c2[0]]**2. +self.MAGERR[c2[1]]**2. )
+
 
     def set_colours(self, colour1=0, colour2=0):
         self.colours[0] = colour1
@@ -166,5 +171,5 @@ if __name__=='__main__':
     print(np.sum(s1.resolved))
 
     s1.construct_colours([2,1],[1,0])
-    s1.set_colours(1,1)
+    print(s1.colours)
 
