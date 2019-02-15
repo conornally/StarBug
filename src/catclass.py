@@ -397,15 +397,15 @@ class CATALOG(object):
         mask = ( mainsequence[:,1]<0.7)
         mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
-        x=np.arange(-0.3,0.75,0.001)
-        y=np.polyval(coeffs, x)
+        x=np.arange(-0.3,0.75,0.1)
+        #y=np.polyval(coeffs, x)
         
         Av = np.arange(0,5,0.01)
         Chivals = np.zeros(Av.shape)
         for i, av in enumerate(Av):
             chi=0
             for s in self.sourcelist:
-                s.construct_colours([2,1],[1,0])
+                #s.construct_colours([2,1],[1,0])
                 #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
                 s.colours[0]+=((Cu-Cg)*av)
                 s.colours[1]+=((Cg-Cr)*av)
@@ -424,7 +424,6 @@ class CATALOG(object):
 
     def a(self, x):
         x-=1.82
-        #coeffs = [1, 0.17699, -0.5044, -0.02427, 0.72085, 0.01979, -0.77530, 0.32999]
         coeffs = [0.32999, -0.77530, 0.01979, 0.72085, -0.02427, -0.50447, 0.17699, 1.0]
         return np.polyval(coeffs, x)
 
@@ -452,5 +451,12 @@ class CATALOG(object):
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
     cat = CATALOG(catalog_style='starbug', catalog_filename='test/ngc884.sb')
+    testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
+    print(testdata)
+    cat.sourcelist = cat.sourcelist[:len(testdata)]
+    for i in range(len(cat.sourcelist)):
+        cat.sourcelist[i].set_colours(testdata[i,2], testdata[i,0])
+        cat.sourcelist[i].resolved = np.ones(np.shape(cat.sourcelist[i].resolved))
+        print(cat.sourcelist[i].colours)
 
     cat.dustCorrection()
