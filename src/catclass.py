@@ -397,41 +397,58 @@ class CATALOG(object):
         mask = ( mainsequence[:,1]<0.7)
         mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
+        deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))
+        print(coeffs)
+        print(deriv_coeffs)
+        
         x=np.arange(-0.3,0.75,0.001)
         y=np.polyval(coeffs, x)
         
-        Av = np.arange(0,5,0.01)
+
+        Av = np.arange(0,1.0,0.01)
         Chivals = np.zeros(Av.shape)
         for i, av in enumerate(Av):
             chi=0
+            print(av)
             for s in self.sourcelist:
                 s.construct_colours([2,1],[1,0])
                 #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
                 s.colours[0]+=((Cu-Cg)*av)
                 s.colours[1]+=((Cg-Cr)*av)
-                schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))/(1))**2.0
+                schi = (s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0/( s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
                 if(np.isfinite(schi)): chi+= schi
             Chivals[i] = chi
         print(Chivals)
-        print(Av[np.argmin(Chivals)])
-        plt.plot(Av, np.log(Chivals))
+        minAv = Av[np.argmin(Chivals)]
+        print(minAv)
+        print("U-G: %f"%(minAv*(Cu-Cg)))
+        print("G-R: %f"%(minAv*(Cg-Cr)))
+        fig = plt.figure()
+        for s in self.sourcelist:
+            s.mag[:,0]-=(Cg*minAv)
+            s.mag[:,1]-=(Cr*minAv)
+            s.mag[:,2]-=(Cu*minAv)
+            s.construct_colours([2,1],[1,0])
+            plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
+        plt.scatter(x,y)
+        plt.gca().invert_yaxis()
+        #plt.plot(Av, np.log(Chivals))
         plt.show()
 
-                #plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
         
         #plt.show()
 
 
     def a(self, x):
-        x-=1.82
+        y = x-1.82
         #coeffs = [1, 0.17699, -0.5044, -0.02427, 0.72085, 0.01979, -0.77530, 0.32999]
         coeffs = [0.32999, -0.77530, 0.01979, 0.72085, -0.02427, -0.50447, 0.17699, 1.0]
-        return np.polyval(coeffs, x)
+        return np.polyval(coeffs, y)
 
     def b(self, x):
-        x-=1.82
+        y = x-1.82
         coeffs = [-2.09002, 5.30260, -0.62251, -5.38434, 1.07233, 2.28305, 1.41338, 0]
-        return np.polyval(coeffs, x)
+        return np.polyval(coeffs, y)
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
