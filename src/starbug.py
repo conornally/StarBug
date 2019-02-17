@@ -2,6 +2,7 @@ import os, sys
 sys.stdout.write('\x1b[s..loading..')
 sys.stdout.flush()
 import logging, readline, glob
+import matplotlib.pyplot as plt
 
 
 try:from fitsclass import FITS
@@ -40,6 +41,9 @@ class StarBug:
                         'exportregion': self.exportRegion,
                         'savecat':self.exportcat,
                         'confidence_cut':self.cat_cutlowconfidence,
+                        'dustcorrection': self.tmp_dustCorrection,
+                        'cmag':self.cmag,
+                        'plot':plt.show,
                         # variables
                         'variable':self.addVariable,
                         # analysis
@@ -107,7 +111,8 @@ class StarBug:
         offsetfile = self.readin("offset file (auto)>> ")
         if offsetfile: readinOFFSET(fitslist, offsetfile)
         if len(fitslist) >=2:
-            fitslist[0].stack( fitslist[1:], crop=True)
+            crop = bool(self.readin("Crop 1/0 >> "))
+            fitslist[0].stack( fitslist[1:], crop=crop)
             #fitslist[0].export('tmp.fits', overwrite=True)
         
 
@@ -224,6 +229,23 @@ class StarBug:
         cat = self.get_cat()
         cat.calibrate()
 
+    def tmp_dustCorrection(self):
+        cat = self.get_cat()
+        if(self.readin("Auto y/n >> "))=='y':
+            cat.dustCorrection()
+        else:
+            Ai=[]
+            for i in range(len(cat.sourcelist[0].MAG)):
+                Ai.append( float(self.readin("Band %d extinction >> "%i)))
+            for s in cat.sourcelist:
+                #sys.stdout.write("%s ->"%s)
+                for i in range(len(s.MAG)):
+                    s.mag[:,i] -= Ai[i]
+                s.construct_colours([2,0],[0,1])
+                #sys.stdout.write(" %s\n"%s)
+
+    def cmag(self):
+        self.get_cat().tmp_GRG()
 
     def catdisplay(self):
         cat = self.get_cat()

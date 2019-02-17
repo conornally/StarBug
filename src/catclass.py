@@ -15,6 +15,8 @@ except: from src.fitsclass import FITS
 try:from parse_config import *
 except:from src.parse_config import *
 
+
+
 class CATALOG(object):
     def __init__(self, fitsfile=None, catalog_style='custom', catalog_filename='', catalog=None, configfile='config'):
         """
@@ -136,6 +138,7 @@ class CATALOG(object):
                                         flux=line[flux], fluxerr=line[fluxerr],
                                         mag=line[mag], magerr=line[magerr],
                                         epochs=numEpochs, bands=numBands)
+        if i < length: self.sourcelist = self.sourcelist[:i]
 
             
 
@@ -395,50 +398,59 @@ class CATALOG(object):
         logging.info("dust correction")
         mainsequence = np.genfromtxt("catalogs/pleiades_sloane")
         mask = ( mainsequence[:,1]<0.7)
-        mainsequence = mainsequence[mask]
+        #mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
-        x=np.arange(-0.3,0.75,0.1)
-        #y=np.polyval(coeffs, x)
-        deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))
+        deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))[:-1]
         print(coeffs)
         print(deriv_coeffs)
-        
-        x=np.arange(-0.3,0.75,0.001)
-        y=np.polyval(coeffs, x)
-        
 
-        Av = np.arange(0,1.0,0.01)
+        x=np.arange(-0.5,1.75,0.001)
+        y=np.polyval(coeffs, x)
+        dy=np.polyval(deriv_coeffs, x)
+
+        #for s in self.sourcelist:
+        #    s.construct_colours([2,0],[0,1])
+
+        #Av = np.arange(0.0,0.0026,0.0025)
+        Av = np.arange(0.1,0.22,0.0025)
         Chivals = np.zeros(Av.shape)
+        fig = plt.figure()
+        #for s in self.sourcelist: s.mag[0,1]-=5.2
         for i, av in enumerate(Av):
-            chi=0
-            print(av)
             for s in self.sourcelist:
-                #s.construct_colours([2,1],[1,0])
-                #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
-                s.colours[0]+=((Cu-Cg)*av)
-                s.colours[1]+=((Cg-Cr)*av)
-                schi = (s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0/( s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
-                if(np.isfinite(schi)): chi+= schi
-            Chivals[i] = chi
+                s.construct_colours([2,0],[0,1])
+                if(s.colours[1]>0.25):
+                    s.colours[1] = np.nan
+                s.colours[0]-= ((Cu-Cg)*av)
+                s.colours[1]-= ((Cg-Cr)*av)
+                schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0)/(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
+                if(np.isfinite(schi)): 
+                    Chivals[i] += schi
+                    plt.scatter(s.colours[1], s.colours[0],c='k', s=0.1)
+                    plt.scatter(s.colours[1], np.polyval(coeffs, s.colours[1]), c='k')
+            print(av, Chivals[i])
         print(Chivals)
         minAv = Av[np.argmin(Chivals)]
         print(minAv)
-        print("U-G: %f"%(minAv*(Cu-Cg)))
-        print("G-R: %f"%(minAv*(Cg-Cr)))
-        fig = plt.figure()
+        print("E(U,G): %f"%(minAv*(Cu-Cg)))
+        print("E(G,R): %f"%(minAv*(Cg-Cr)))
+        print("Au: %f"%(minAv*Cu))
+        print("Ar: %f"%(minAv*Cr))
+        print("Ag: %f"%(minAv*Cg))
         for s in self.sourcelist:
             s.mag[:,0]-=(Cg*minAv)
             s.mag[:,1]-=(Cr*minAv)
             s.mag[:,2]-=(Cu*minAv)
-            s.construct_colours([2,1],[1,0])
-            plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
-        plt.scatter(x,y)
+            s.construct_colours([2,0],[0,1])
+            plt.scatter(s.colours[1], s.colours[0],c='b')
+        print(s.MAG)
+        plt.plot( (Cg-Cr)*Av, (Cu-Cg)*Av)
+        plt.scatter(mainsequence[:,1], mainsequence[:,0], s=0.2, c='r')
+        plt.plot(x,y)
+        plt.plot(x,dy)
         plt.gca().invert_yaxis()
-        #plt.plot(Av, np.log(Chivals))
+        plt.plot(Av, -np.log(Chivals))
         plt.show()
-
-        
-        #plt.show()
 
 
     def a(self, x):
@@ -452,25 +464,142 @@ class CATALOG(object):
         coeffs = [-2.09002, 5.30260, -0.62251, -5.38434, 1.07233, 2.28305, 1.41338, 0]
         return np.polyval(coeffs, y)
 
+    def calculateDistance(self):
+        """
+        TMP gets distance to ngc from pleiedes
+        """
+        pleiades = np.genfromtxt("catalogs/pleiades_sloane")
+        pleides = pleiades[np.where( pleiades[:,2] < 11)]
+        pli_distance = 134
+
+        fig = plt.figure()
+        ax0 = plt.subplot(211)
+        ax0.scatter(pleiades[:,1], pleiades[:,2])
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            ax0.scatter(s.colours[1], s.MAG[0], c='k')
+
+        plt.gca().invert_yaxis()
+        ax1=plt.subplot(212, sharex=ax0)
+        #g_r = [s.colours[1] for s in self.sourcelist if np.isfinite(s.colours[1]) else 0]
+        #g_r = [s.colours[1] if np.isfinite(s.colours[1]) else 0 for s in self.sourcelist]
+        g_r = [s.colours[1] for s in self.sourcelist]
+
+        colourmin=np.nanmin(pleiades[:,1])
+        colourmax=np.nanmax(pleiades[:,1])
+        ax1.hist(pleiades[:,1], bins=20, range=(colourmin, colourmax))
+        ax1.hist(g_r,bins=40, range=(colourmin, colourmax), histtype='step')
+        sourceG_R=[]
+        sourceG=[]
+        sourcedG=[]
+        for s in self.sourcelist:
+            c = s.colours[1]+0.07
+            if (np.isfinite(c)):
+                sourceG_R.append(c)
+                sourceG.append(s.MAG[0])
+                sourcedG.append(s.MAGERR[0])
+                if c < colourmin: colourmin = c
+                if c > colourmax: colourmax = c
+        Range = np.linspace(colourmin, colourmax, 150)
+        print(Range)
+        sourceG = np.array(sourceG)
+        sourcedG = np.array(sourcedG)
+        dm = []
+        ddm=[]
+        colour=[]
+        for i in range(len(Range[:-1])):
+            c0 = Range[i]
+            c1 = Range[i+1]
+            pliMask = ( pleiades[:,1]>=c0 ) * (pleiades[:,1]<c1)            
+            pliMean = np.mean(pleiades[:,2][pliMask])
+
+            catMask = ( sourceG_R>=c0 ) * ( sourceG_R<c1 )
+            catMean = np.nanmean(sourceG[catMask])
+            if(np.isfinite(catMean) and np.isfinite(pliMean)):
+                pliErr = np.var( pleiades[:,2][pliMask])
+                catErr = np.sqrt( sum( [ (em/len(sourcedG[catMask]))**2. for em in sourcedG[catMask] ] ) )
+                if(pliErr<1 and catErr <1 and Range[i]<0.17):
+                    dm.append(pliMean - catMean)
+                    colour.append(Range[i])
+                    ddm.append( np.sqrt( pliErr**2. + catErr**2.) )
+                ax0.scatter(c0, catMean, c='r')
+                ax0.scatter(c0, pliMean, c='r')
+
+
+        chi = getCHI( np.array([ colour, dm, np.zeros((len(dm))), ddm]).T, 0)
+        print(chi['x'])
+
+        x=np.arange(min(colour), max(colour),0.01)
+        y = np.polyval(list(reversed( chi['x'])), x)
+        fig=plt.figure()
+
+        plt.scatter(colour, dm)
+        plt.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
+        plt.plot(x,y)
+
+        Dn = pli_distance *10.0**(-chi['x']/5.)
+        print(Dn)
+        #dDn = (-np.log(10.)/5.)*Dn*
+        #print( (-np.log(10.0)/5.) 
+
+        plt.show()
+
+
+
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
         
+    def tmp_GRG(self):
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            plt.scatter(s.colours[1], s.MAG[0], c='k', s=0.5)
+        plt.gca().invert_yaxis()
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
     
+def chisqd(coeffs, x,y,yerr, order):
+    model = polynomial(coeffs, x, order)
+    return np.sum(((model - y)/yerr)**2.)
+
+def polynomial(coeffs, x, order):
+    y = 0
+    for i in range(order+1):
+        y+= coeffs[i]*x**i
+    return y
+
+
+def getCHI(data,order):
+
+    x = data[:,0]
+    y = data[:,1]
+    dx = data[:,2]
+    dy = data[:,3]
+    print(x)
+    initial=[1]*(order+1)
+    return optimize.minimize(chisqd, initial, args=(x, y, dy, order))
 
 
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='test/ngc884.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884.sb')
+    """
     testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
     print(testdata)
+    u=0
+    g=-testdata[:,0]
+    r=g-testdata[:,3]
     cat.sourcelist = cat.sourcelist[:len(testdata)]
     for i in range(len(cat.sourcelist)):
+        cat.sourcelist[i].mag[0,0] = g[i]
+        cat.sourcelist[i].mag[0,1] = r[i]
+        cat.sourcelist[i].mag[0,2] = u
+        cat.sourcelist[i].colourError[0] = testdata[:,1][i]
+        cat.sourcelist[i].colourError[1] = testdata[:,3][i]
         cat.sourcelist[i].set_colours(testdata[i,2], testdata[i,0])
         cat.sourcelist[i].resolved = np.ones(np.shape(cat.sourcelist[i].resolved))
         print(cat.sourcelist[i].colours)
-
-    cat.dustCorrection()
+    """
+    #cat.dustCorrection()
+    cat.calculateDistance()
