@@ -96,6 +96,8 @@ class FITS(object):
             self.get_fft()
             fitsobj.get_fft()
         convolution = np.multiply(self.fft, np.conj(fitsobj.fft))
+        plt.imshow(convolution)
+        plt.show()
         inverse = np.fft.ifft2(convolution)
         a = np.argmax(inverse)
         r = len(self.data[0])
