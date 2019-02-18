@@ -42,6 +42,9 @@ class StarBug:
                         'savecat':self.exportcat,
                         'confidence_cut':self.cat_cutlowconfidence,
                         'dustcorrection': self.tmp_dustCorrection,
+                        'distances': self.tmp_distance,
+                        'absoluteMags': self.calcAbsoluteMags,
+                        'spectype':self.calcSpectralType,
                         'cmag':self.cmag,
                         'plot':plt.show,
                         # variables
@@ -243,6 +246,18 @@ class StarBug:
                     s.mag[:,i] -= Ai[i]
                 s.construct_colours([2,0],[0,1])
                 #sys.stdout.write(" %s\n"%s)
+
+    def tmp_distance(self):
+        cat = self.get_cat()
+        cat.calculateDistance()
+
+    def calcAbsoluteMags(self):
+        cat = self.get_cat()
+        cat.calcAbsoluteMags()
+
+    def calcSpectralType(self):
+        cat = self.get_cat()
+        cat.calcSpectralTypes()
 
     def cmag(self):
         self.get_cat().tmp_GRG()

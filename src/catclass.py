@@ -359,12 +359,16 @@ class CATALOG(object):
             outcat.write("#Data Length: %s\n"%len(self.sourcelist))
             outcat.write("#Number Epochs/Tiles: %d\n"%self.sourcelist[0].size[0])
             outcat.write("#Number Bands: %d\n"%self.sourcelist[0].size[1])
-            outcat.write("ID RA DEC ")
+            outcat.write("#ID RA DEC ")
             for b in range(self.sourcelist[0].size[1]):
                 outcat.write("FLUX:%d "%b )
                 outcat.write("FLUXERR:%d "%b )
                 outcat.write("MAG:%d "%b )
                 outcat.write("MAGERR:%d "%b )
+            outcat.write("Distance Mass ")
+            for i in range(self.sourcelist[0].size[1]):
+                outcat.write("ABSOLMAG:%d "%i)
+            outcat.write("SpecType ")
             for i,s in enumerate(self.sourcelist,1):
                 outcat.write("\n%d %s"%(i, s.createExportString(style='mean tiles')))
         """
@@ -505,31 +509,27 @@ class CATALOG(object):
         """
         TMP gets distance to ngc from pleiedes
         """
-        pleiades = np.genfromtxt("catalogs/pleiades_sloane")
+        pleiades = np.genfromtxt("/home/conor/scripts/StarBug/catalogs/pleiades_sloane")
         pleiades = pleiades[np.where( pleiades[:,2] < 15)]
+        pleiades = pleiades[np.where( pleiades[:,1] < 0.3)]
         pli_distance = 134
 
         fig = plt.figure()
         ax0 = plt.subplot(211)
-        ax0.scatter(pleiades[:,1], pleiades[:,2])
+        ax0.scatter(pleiades[:,1], pleiades[:,2], c='k', marker='*')
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
-            #s.colours[1] += 0#0.07
-            ax0.scatter(s.colours[1], s.MAG[0], c='k')
+            if(s.colours[1]>0.25 or s.colours[1]<-0.4): s.colours[1] = np.nan
+            ax0.scatter(s.colours[1], s.MAG[0], c='b', marker='*')
 
         plt.gca().invert_yaxis()
-        ax1=plt.subplot(212, sharex=ax0)
-        #g_r = [s.colours[1] for s in self.sourcelist if np.isfinite(s.colours[1]) else 0]
-        #g_r = [s.colours[1] if np.isfinite(s.colours[1]) else 0 for s in self.sourcelist]
-        g_r = [s.colours[1] for s in self.sourcelist]
 
         colourmin=np.nanmin(pleiades[:,1])
         colourmax=np.nanmax(pleiades[:,1])
-        ax1.hist(pleiades[:,1], bins=20, range=(colourmin, colourmax))
-        ax1.hist(g_r,bins=40, range=(colourmin, colourmax), histtype='step')
         sourceG_R=[]
         sourceG=[]
         sourcedG=[]
+
         for s in self.sourcelist:
             c = s.colours[1]
             if (np.isfinite(c)):
@@ -538,8 +538,7 @@ class CATALOG(object):
                 sourcedG.append(s.MAGERR[0])
                 if c < colourmin: colourmin = c
                 if c > colourmax: colourmax = c
-        Range = np.linspace(colourmin, colourmax, 150)
-        print(Range)
+        Range = np.linspace(colourmin, colourmax, 50)
         sourceG = np.array(sourceG)
         sourcedG = np.array(sourcedG)
         dm = []
@@ -554,25 +553,30 @@ class CATALOG(object):
             catMask = ( sourceG_R>=c0 ) * ( sourceG_R<c1 )
             catMean = np.nanmean(sourceG[catMask])
             if(np.isfinite(catMean) and np.isfinite(pliMean)):
-                pliErr = np.var( pleiades[:,2][pliMask])
+                pliErr = np.std( pleiades[:,2][pliMask])
                 catErr = np.sqrt( sum( [ (em/len(sourcedG[catMask]))**2. for em in sourcedG[catMask] ] ) )
                 if(pliErr<1 and catErr <1 and Range[i]<0.17):
                     dm.append(pliMean - catMean)
                     colour.append(Range[i])
                     ddm.append( np.sqrt( pliErr**2. + catErr**2.) )
-                ax0.scatter(c0, catMean, c='r')
-                ax0.scatter(c0, pliMean, c='r')
+                ax0.scatter(c0, catMean, c='r', marker='x')
+                #ax0.scatter(c0, pliMean, c='r', marker='x')
 
 
         chi, coeffs = get_CHI( colour, dm, ddm, 0)
 
         x=np.arange(min(colour), max(colour),0.01)
         y = np.polyval(list(reversed( coeffs)), x)
-        fig=plt.figure()
+        ax2=plt.subplot(212, sharex=ax0)
+        ax2.scatter(colour, dm, s=5)
+        ax2.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
+        ax2.plot(x,y)
+        ax0.tick_params(direction='in', labelbottom=False)
+        ax2.tick_params(direction='in')
 
-        plt.scatter(colour, dm)
-        plt.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
-        plt.plot(x,y)
+        ax2.set_xlabel('G-R')
+        ax2.set_ylabel(r'$\delta$M')
+        ax0.set_ylabel('G')
 
         Dn = pli_distance *10.0**(-coeffs[0]/5.)
 
@@ -589,65 +593,43 @@ class CATALOG(object):
             s.set_distance(Dn, distErr)
 
 
+    def calcAbsoluteMags(self):
+        for s in self.sourcelist:
+            s._voidCalcAbsoluteMagnitudes()
+
+    def calcSpectralTypes(self):
+        """
+        UnGeneral calculates spectral type based on G-R colour
+        """
+        types = np.genfromtxt('/home/conor/scripts/StarBug/catalogs/grcolours.txt', usecols=(0), dtype=str)
+        colours = np.genfromtxt('/home/conor/scripts/StarBug/catalogs/grcolours.txt', usecols=(1))
+
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            for i in range(len(types)-1):
+                if(s.colours[1]>colours[i] and s.colours[1]<colours[i+1]):
+                    s.spectralType = types[i]
+
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
         
     def tmp_GRG(self):
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
-            plt.scatter(s.colours[1], s.MAG[0], c='k')
+            plt.scatter(s.colours[1], s.AbsoluteMag[0], c='k')
         plt.gca().invert_yaxis()
+        with open("/home/conor/scripts/StarBug/catalogs/grcolours.txt", 'r') as startype:
+            for line in startype.readlines():
+                if(float(line[1:4])%2 == 0):
+                    plt.axvline( float(line.split(' ')[1]))
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
     
-#def chisqd(coeffs, x,y,yerr, order):
-#    model = polynomial(coeffs, x, order)
-#    return np.sum(((model - y)/yerr)**2.)
-#
-#def polynomial(coeffs, x, order):
-#    y = 0
-#    for i in range(order+1):
-#        y+= coeffs[i]*x**i
-#    return y
-#
-#def chiErr(coeffs, x, y, yerr, order):
-#    minchi = chisqd(coeffs, np.array(x), y, yerr, order)
-#    newcoeffs = np.linspace(coeffs[0]*0.98, coeffs[0]*1.02, 1000)
-#    fig=plt.figure()
-#    NewChi = np.zeros(newcoeffs.shape)
-#    e=[0,0]
-#    for i,c in enumerate(newcoeffs[1:-1]):
-#        NewChi[i] = chisqd([c], np.array(x) ,y,yerr,order)
-#        if(NewChi[i-1]>(1+minchi) and NewChi[i]<=(1+minchi)):
-#            e[0]=c
-#        if(NewChi[i-1]<=(1+minchi) and NewChi[i]>(1+minchi)):
-#            e[1]=c
-#
-#    print(e)
-#    print("+ %f"%(coeffs[0]-e[1]))
-#    print("- %f"%(e[0]-coeffs[0]))
-#    plt.scatter(newcoeffs[1:-1], NewChi[1:-1], c='k', s=0.5)
-#    plt.axhline(1+chisqd(coeffs, np.array(x), y, yerr, 0))
-#    plt.show()
-#    return e
-#
-#
-#def getCHI(data,order):
-#
-#    x = data[:,0]
-#    y = data[:,1]
-#    dx = data[:,2]
-#    dy = data[:,3]
-#    print(x)
-#    initial=[1]*(order+1)
-#    return optimize.minimize(chisqd, initial, args=(x, y, dy, order))
-
-
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BODGE.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BODG.sb')
     """
     testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
     print(testdata)
@@ -667,3 +649,4 @@ if __name__=='__main__':
     """
     #cat.dustCorrection()
     cat.calculateDistance()
+    cat.calcSpectralTypes()

@@ -29,7 +29,7 @@ class Source(object):
         self.AbsoluteMag = np.zeros((bands))
 
         self.mass = 0
-        self.spectralType=['G',2,'V'] #type, subgroup, evolution
+        self.spectralType=''#['G',2,'V'] #type, subgroup, evolution
         self.distance=0
 
         self.resolved = self.mag / self.mag
@@ -159,6 +159,7 @@ class Source(object):
             exportstring += "%f "%self.mass
             for i in range(self.size[1]):
                 exportstring += "%f "%self.AbsoluteMag[i]
+            exportstring+= "%s "%self.spectralType
 
         return exportstring
 
@@ -176,7 +177,7 @@ class Source(object):
     def _voidCalcAbsoluteMagnitudes(self):
         if(self.distance > 0):
             for i, apparentMag in enumerate(self.MAG):
-                self.AbsoluteMag[i] = self.apparentMag - 5*np.log10(self.distance/10.)
+                self.AbsoluteMag[i] = apparentMag - 5*np.log10(self.distance/10.)
             
 
     def __getitem__(self, listRef):
