@@ -14,6 +14,10 @@ try: from fitsclass import FITS
 except: from src.fitsclass import FITS
 try:from parse_config import *
 except:from src.parse_config import *
+try: from chi import *
+except: from src.chi import *
+
+
 
 class CATALOG(object):
     def __init__(self, fitsfile=None, catalog_style='custom', catalog_filename='', catalog=None, configfile='config'):
@@ -136,6 +140,7 @@ class CATALOG(object):
                                         flux=line[flux], fluxerr=line[fluxerr],
                                         mag=line[mag], magerr=line[magerr],
                                         epochs=numEpochs, bands=numBands)
+        if i < length: self.sourcelist = self.sourcelist[:i]
 
             
 
@@ -354,12 +359,16 @@ class CATALOG(object):
             outcat.write("#Data Length: %s\n"%len(self.sourcelist))
             outcat.write("#Number Epochs/Tiles: %d\n"%self.sourcelist[0].size[0])
             outcat.write("#Number Bands: %d\n"%self.sourcelist[0].size[1])
-            outcat.write("ID RA DEC ")
+            outcat.write("#ID RA DEC ")
             for b in range(self.sourcelist[0].size[1]):
                 outcat.write("FLUX:%d "%b )
                 outcat.write("FLUXERR:%d "%b )
                 outcat.write("MAG:%d "%b )
                 outcat.write("MAGERR:%d "%b )
+            outcat.write("Distance Mass ")
+            for i in range(self.sourcelist[0].size[1]):
+                outcat.write("ABSOLMAG:%d "%i)
+            outcat.write("SpecType ")
             for i,s in enumerate(self.sourcelist,1):
                 outcat.write("\n%d %s"%(i, s.createExportString(style='mean tiles')))
         """
@@ -380,6 +389,7 @@ class CATALOG(object):
         """
 
     def dustCorrection(self):
+
         U = 0.3543 #um
         G = 0.4770 #um
         R = 0.6231 #um
@@ -397,54 +407,246 @@ class CATALOG(object):
         mask = ( mainsequence[:,1]<0.7)
         mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
+        deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))[:-1]
+
         x=np.arange(-0.3,0.75,0.001)
         y=np.polyval(coeffs, x)
-        
-        Av = np.arange(0,5,0.01)
-        Chivals = np.zeros(Av.shape)
-        for i, av in enumerate(Av):
-            chi=0
-            for s in self.sourcelist:
-                s.construct_colours([2,1],[1,0])
-                #if(np.sum(s.resolved) == (s.size[0]*s.size[1])):
-                s.colours[0]+=((Cu-Cg)*av)
-                s.colours[1]+=((Cg-Cr)*av)
-                schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))/(1))**2.0
-                if(np.isfinite(schi)): chi+= schi
-            Chivals[i] = chi
-        print(Chivals)
-        print(Av[np.argmin(Chivals)])
-        plt.plot(Av, np.log(Chivals))
-        plt.show()
+        dy=np.polyval(deriv_coeffs, x)
 
-                #plt.scatter(s.colours[1], -s.colours[0],c='k', s=0.1)
-        
-        #plt.show()
+        for s in self.sourcelist: s.mag[:,2] += 1
+
+        Av = np.linspace(0.12,0.2,30)
+        Chivals = np.zeros(Av.shape)
+        #fig = plt.figure()
+        for i, av in enumerate(Av):
+            for s in self.sourcelist:
+                s.construct_colours([2,0],[0,1])
+                if(s.colours[1]>0.3 and s.colours[0]<2):
+                    s.colours[1] = np.nan
+                s.colours[0]-= ((Cu-Cg)*av)
+                s.colours[1]-= ((Cg-Cr)*av)
+                #schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0)/(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
+                error =np.sqrt(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0) 
+                schi = chisqd( coeffs, s.colours[1], s.colours[0], error)
+                if(np.isfinite(schi)): 
+                    Chivals[i] += schi
+                    #plt.scatter(s.colours[1], s.colours[0],c='k', s=0.1)
+                    #plt.scatter(s.colours[1], np.polyval(coeffs, s.colours[1]), c='k')
+            print(av, Chivals[i])
+        minAv = Av[np.argmin(Chivals)]
+        print("E(U,G): %f"%(minAv*(Cu-Cg)))
+        print("E(G,R): %f"%(minAv*(Cg-Cr)))
+        print("Au: %f"%(minAv*Cu))
+        print("Ar: %f"%(minAv*Cr))
+        print("Ag: %f"%(minAv*Cg))
+
+        chix=[]
+        chiy=[]
+        chiyerr=[]
+
+        fig = plt.figure()
+        ax = plt.subplot(111)
+
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            if np.isfinite(sum(s.colours)):
+                ax.scatter(s.colours[1], s.colours[0], c='r', marker='*', s=10) 
+                s.mag[:,0]-=(Cg*minAv)
+                s.mag[:,1]-=(Cr*minAv) #+0.07
+                s.mag[:,2]-=(Cu*minAv)
+
+                s.construct_colours([2,0],[0,1])
+                chix.append(s.colours[1])
+                chiy.append(s.colours[0])
+                chiyerr.append(np.sqrt(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0))
+
+                ax.scatter(s.colours[1], s.colours[0], c='b', marker='*', s=10)
+
+
+
+        print(get_CHIerr(chix,chiy,chiyerr, coeffs))
+        """
+        plt.plot( (Cg-Cr)*Av, (Cu-Cg)*Av)
+        plt.plot(x,y)
+        plt.plot(x,dy)
+        plt.plot(Av, -np.log(Chivals))
+        """
+        plt.gca().invert_yaxis()
+        ax.scatter(mainsequence[:,1], mainsequence[:,0], c='k', s=10)
+        ax.plot(x,y)
+        ax.tick_params(direction='in', which='both', right=True, top=True, axis='both')
+        #plt.axvline(0.3)
+        #plt.axhline(2)
+
+        ax.set_xlabel("(G-R)")
+        ax.set_ylabel("(U-G)")
+
+        startx=0.7
+        starty=1
+        plt.arrow(startx,starty, -((Cg-Cr)*minAv*0.5), -((Cu-Cg)*minAv*0.45), head_width=0.02)
+        plt.arrow(startx,starty, 0, -((Cu-Cg)*minAv*0.45), head_width=0.02)
+        plt.arrow(startx,starty-((Cu-Cg)*minAv*0.5), -((Cg-Cr)*minAv*0.5), 0, head_width=0.02)
+
+        plt.plot(np.nan, np.nan, marker='*', c='r', label="Reddened")
+        plt.plot(np.nan, np.nan, marker='*', c='b', label="DeReddened")
+        plt.plot(np.nan, np.nan, marker='*', c='k', label="Pleiades")
+        plt.legend(loc=3)
+        plt.show()
 
 
     def a(self, x):
-        x-=1.82
+        y = x-1.82
         #coeffs = [1, 0.17699, -0.5044, -0.02427, 0.72085, 0.01979, -0.77530, 0.32999]
         coeffs = [0.32999, -0.77530, 0.01979, 0.72085, -0.02427, -0.50447, 0.17699, 1.0]
-        return np.polyval(coeffs, x)
+        return np.polyval(coeffs, y)
 
     def b(self, x):
-        x-=1.82
+        y = x-1.82
         coeffs = [-2.09002, 5.30260, -0.62251, -5.38434, 1.07233, 2.28305, 1.41338, 0]
-        return np.polyval(coeffs, x)
+        return np.polyval(coeffs, y)
+
+    def calculateDistance(self):
+        """
+        TMP gets distance to ngc from pleiedes
+        """
+        pleiades = np.genfromtxt("/home/conor/scripts/StarBug/catalogs/pleiades_sloane")
+        pleiades = pleiades[np.where( pleiades[:,2] < 15)]
+        pleiades = pleiades[np.where( pleiades[:,1] < 0.3)]
+        pli_distance = 134
+
+        fig = plt.figure()
+        ax0 = plt.subplot(211)
+        ax0.scatter(pleiades[:,1], pleiades[:,2], c='k', marker='*')
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            if(s.colours[1]>0.25 or s.colours[1]<-0.4): s.colours[1] = np.nan
+            ax0.scatter(s.colours[1], s.MAG[0], c='b', marker='*')
+
+        plt.gca().invert_yaxis()
+
+        colourmin=np.nanmin(pleiades[:,1])
+        colourmax=np.nanmax(pleiades[:,1])
+        sourceG_R=[]
+        sourceG=[]
+        sourcedG=[]
+
+        for s in self.sourcelist:
+            c = s.colours[1]
+            if (np.isfinite(c)):
+                sourceG_R.append(c)
+                sourceG.append(s.MAG[0])
+                sourcedG.append(s.MAGERR[0])
+                if c < colourmin: colourmin = c
+                if c > colourmax: colourmax = c
+        Range = np.linspace(colourmin, colourmax, 50)
+        sourceG = np.array(sourceG)
+        sourcedG = np.array(sourcedG)
+        dm = []
+        ddm=[]
+        colour=[]
+        for i in range(len(Range[:-1])):
+            c0 = Range[i]
+            c1 = Range[i+1]
+            pliMask = ( pleiades[:,1]>=c0 ) * (pleiades[:,1]<c1)            
+            pliMean = np.mean(pleiades[:,2][pliMask])
+
+            catMask = ( sourceG_R>=c0 ) * ( sourceG_R<c1 )
+            catMean = np.nanmean(sourceG[catMask])
+            if(np.isfinite(catMean) and np.isfinite(pliMean)):
+                pliErr = np.std( pleiades[:,2][pliMask])
+                catErr = np.sqrt( sum( [ (em/len(sourcedG[catMask]))**2. for em in sourcedG[catMask] ] ) )
+                if(pliErr<1 and catErr <1 and Range[i]<0.17):
+                    dm.append(pliMean - catMean)
+                    colour.append(Range[i])
+                    ddm.append( np.sqrt( pliErr**2. + catErr**2.) )
+                ax0.scatter(c0, catMean, c='r', marker='x')
+                #ax0.scatter(c0, pliMean, c='r', marker='x')
+
+
+        chi, coeffs = get_CHI( colour, dm, ddm, 0)
+
+        x=np.arange(min(colour), max(colour),0.01)
+        y = np.polyval(list(reversed( coeffs)), x)
+        ax2=plt.subplot(212, sharex=ax0)
+        ax2.scatter(colour, dm, s=5)
+        ax2.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
+        ax2.plot(x,y)
+        ax0.tick_params(direction='in', labelbottom=False)
+        ax2.tick_params(direction='in')
+
+        ax2.set_xlabel('G-R')
+        ax2.set_ylabel(r'$\delta$M')
+        ax0.set_ylabel('G')
+
+        Dn = pli_distance *10.0**(-coeffs[0]/5.)
+
+        print('dist', Dn)
+        error = get_CHIerr(colour, dm, ddm, coeffs)
+        DnMAX = pli_distance*10.0**(-error[0]/5.)
+        DnMIN = pli_distance*10.0**(-error[1]/5.)
+        print(error)
+        print(DnMAX, DnMIN)
+        plt.show()
+        distErr=0
+
+        for s in self.sourcelist:
+            s.set_distance(Dn, distErr)
+
+
+    def calcAbsoluteMags(self):
+        for s in self.sourcelist:
+            s._voidCalcAbsoluteMagnitudes()
+
+    def calcSpectralTypes(self):
+        """
+        UnGeneral calculates spectral type based on G-R colour
+        """
+        types = np.genfromtxt('/home/conor/scripts/StarBug/catalogs/grcolours.txt', usecols=(0), dtype=str)
+        colours = np.genfromtxt('/home/conor/scripts/StarBug/catalogs/grcolours.txt', usecols=(1))
+
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            for i in range(len(types)-1):
+                if(s.colours[1]>colours[i] and s.colours[1]<colours[i+1]):
+                    s.spectralType = types[i]
 
     def cut_lowconfidence(self):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
         
+    def tmp_GRG(self):
+        for s in self.sourcelist:
+            s.construct_colours([2,0],[0,1])
+            plt.scatter(s.colours[1], s.AbsoluteMag[0], c='k')
+        plt.gca().invert_yaxis()
+        with open("/home/conor/scripts/StarBug/catalogs/grcolours.txt", 'r') as startype:
+            for line in startype.readlines():
+                if(float(line[1:4])%2 == 0):
+                    plt.axvline( float(line.split(' ')[1]))
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
     
 
-
-
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='test/ngc884.sb')
-
-    cat.dustCorrection()
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BODG.sb')
+    """
+    testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
+    print(testdata)
+    u=0
+    g=-testdata[:,0]
+    r=g-testdata[:,3]
+    cat.sourcelist = cat.sourcelist[:len(testdata)]
+    for i in range(len(cat.sourcelist)):
+        cat.sourcelist[i].mag[0,0] = g[i]
+        cat.sourcelist[i].mag[0,1] = r[i]
+        cat.sourcelist[i].mag[0,2] = u
+        cat.sourcelist[i].colourError[0] = testdata[:,1][i]
+        cat.sourcelist[i].colourError[1] = testdata[:,3][i]
+        cat.sourcelist[i].set_colours(testdata[i,2], testdata[i,0])
+        cat.sourcelist[i].resolved = np.ones(np.shape(cat.sourcelist[i].resolved))
+        print(cat.sourcelist[i].colours)
+    """
+    #cat.dustCorrection()
+    cat.calculateDistance()
+    cat.calcSpectralTypes()
