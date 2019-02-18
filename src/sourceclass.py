@@ -21,6 +21,17 @@ class Source(object):
         self.shp=       shp*shape
         self.rnd=       rnd*shape
 
+        self.MAG = np.zeros((bands))
+        self.MAGERR = np.zeros((bands))
+        self.FLUX = np.zeros((bands))
+        self.FLUXERR = np.zeros((bands))
+
+        self.AbsoluteMag = np.zeros((bands))
+
+        self.mass = 0
+        self.spectralType=['G',2,'V'] #type, subgroup, evolution
+        self.distance=0
+
         self.resolved = self.mag / self.mag
 
         self.colours = np.zeros(2)
@@ -42,6 +53,7 @@ class Source(object):
         self.SHARP=     np.nanmean(self.shp,0)
         self.ROUND=     np.nanmean(self.rnd,0)
         self.calc_errors()
+        if self.distance: self._voidCalcAbsoluteMagnitudes()
 
     def calc_errors(self):
         #across epochs
@@ -126,7 +138,7 @@ class Source(object):
     def append_Tile(self, source=False, bad=False):
         self.append_Epoch(source, bad) # for now it just does the same, but perhaps in the future ill want to change that
         
-    def createExportString(self, style='full'):
+    def createExportString(self, style='full', extras=True):
         exportstring="%f %f "%(self.RA, self.DEC)
         if(style=='full'):
             for epoch in range(self.size[0]):
@@ -142,9 +154,30 @@ class Source(object):
                 exportstring += "%f "%zero2nan(self.FLUXERR[band])
                 exportstring += "%f "%zero2nan(self.MAG[band])
                 exportstring += "%f "%zero2nan(self.MAGERR[band])
-
+        if(extras):
+            exportstring += "%f "%self.distance
+            exportstring += "%f "%self.mass
+            for i in range(self.size[1]):
+                exportstring += "%f "%self.AbsoluteMag[i]
 
         return exportstring
+
+    def set_distance(self, distance, error):
+        self.distance = distance
+        self.distance_error=error
+
+    def set_AbsoluteMag(self, Maglist, error):
+        if(np.shape(Maglist) == np.shape(self.AbsoluteMag) and
+                np.shape(error)==np.shape(self.AbsoluteMag)):
+            self.AbsoluteMag = Maglist
+            self.AbsoluteMagError = error
+
+
+    def _voidCalcAbsoluteMagnitudes(self):
+        if(self.distance > 0):
+            for i, apparentMag in enumerate(self.MAG):
+                self.AbsoluteMag[i] = self.apparentMag - 5*np.log10(self.distance/10.)
+            
 
     def __getitem__(self, listRef):
         key, epoch, band = listRef

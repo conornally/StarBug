@@ -14,6 +14,8 @@ try: from fitsclass import FITS
 except: from src.fitsclass import FITS
 try:from parse_config import *
 except:from src.parse_config import *
+try: from chi import *
+except: from src.chi import *
 
 
 
@@ -383,6 +385,7 @@ class CATALOG(object):
         """
 
     def dustCorrection(self):
+
         U = 0.3543 #um
         G = 0.4770 #um
         R = 0.6231 #um
@@ -398,58 +401,92 @@ class CATALOG(object):
         logging.info("dust correction")
         mainsequence = np.genfromtxt("catalogs/pleiades_sloane")
         mask = ( mainsequence[:,1]<0.7)
-        #mainsequence = mainsequence[mask]
+        mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
         deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))[:-1]
-        print(coeffs)
-        print(deriv_coeffs)
 
-        x=np.arange(-0.5,1.75,0.001)
+        x=np.arange(-0.3,0.75,0.001)
         y=np.polyval(coeffs, x)
         dy=np.polyval(deriv_coeffs, x)
 
-        #for s in self.sourcelist:
-        #    s.construct_colours([2,0],[0,1])
+        for s in self.sourcelist: s.mag[:,2] += 1
 
-        #Av = np.arange(0.0,0.0026,0.0025)
-        Av = np.arange(0.1,0.22,0.0025)
+        Av = np.linspace(0.12,0.2,30)
         Chivals = np.zeros(Av.shape)
-        fig = plt.figure()
-        #for s in self.sourcelist: s.mag[0,1]-=5.2
+        #fig = plt.figure()
         for i, av in enumerate(Av):
             for s in self.sourcelist:
                 s.construct_colours([2,0],[0,1])
-                if(s.colours[1]>0.25):
+                if(s.colours[1]>0.3 and s.colours[0]<2):
                     s.colours[1] = np.nan
                 s.colours[0]-= ((Cu-Cg)*av)
                 s.colours[1]-= ((Cg-Cr)*av)
-                schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0)/(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
+                #schi = ((s.colours[0] - np.polyval(coeffs, s.colours[1]))**2.0)/(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0  )
+                error =np.sqrt(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0) 
+                schi = chisqd( coeffs, s.colours[1], s.colours[0], error)
                 if(np.isfinite(schi)): 
                     Chivals[i] += schi
-                    plt.scatter(s.colours[1], s.colours[0],c='k', s=0.1)
-                    plt.scatter(s.colours[1], np.polyval(coeffs, s.colours[1]), c='k')
+                    #plt.scatter(s.colours[1], s.colours[0],c='k', s=0.1)
+                    #plt.scatter(s.colours[1], np.polyval(coeffs, s.colours[1]), c='k')
             print(av, Chivals[i])
-        print(Chivals)
         minAv = Av[np.argmin(Chivals)]
-        print(minAv)
         print("E(U,G): %f"%(minAv*(Cu-Cg)))
         print("E(G,R): %f"%(minAv*(Cg-Cr)))
         print("Au: %f"%(minAv*Cu))
         print("Ar: %f"%(minAv*Cr))
         print("Ag: %f"%(minAv*Cg))
+
+        chix=[]
+        chiy=[]
+        chiyerr=[]
+
+        fig = plt.figure()
+        ax = plt.subplot(111)
+
         for s in self.sourcelist:
-            s.mag[:,0]-=(Cg*minAv)
-            s.mag[:,1]-=(Cr*minAv)
-            s.mag[:,2]-=(Cu*minAv)
             s.construct_colours([2,0],[0,1])
-            plt.scatter(s.colours[1], s.colours[0],c='b')
-        print(s.MAG)
+            if np.isfinite(sum(s.colours)):
+                ax.scatter(s.colours[1], s.colours[0], c='r', marker='*', s=10) 
+                s.mag[:,0]-=(Cg*minAv)
+                s.mag[:,1]-=(Cr*minAv) #+0.07
+                s.mag[:,2]-=(Cu*minAv)
+
+                s.construct_colours([2,0],[0,1])
+                chix.append(s.colours[1])
+                chiy.append(s.colours[0])
+                chiyerr.append(np.sqrt(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0))
+
+                ax.scatter(s.colours[1], s.colours[0], c='b', marker='*', s=10)
+
+
+
+        print(get_CHIerr(chix,chiy,chiyerr, coeffs))
+        """
         plt.plot( (Cg-Cr)*Av, (Cu-Cg)*Av)
-        plt.scatter(mainsequence[:,1], mainsequence[:,0], s=0.2, c='r')
         plt.plot(x,y)
         plt.plot(x,dy)
-        plt.gca().invert_yaxis()
         plt.plot(Av, -np.log(Chivals))
+        """
+        plt.gca().invert_yaxis()
+        ax.scatter(mainsequence[:,1], mainsequence[:,0], c='k', s=10)
+        ax.plot(x,y)
+        ax.tick_params(direction='in', which='both', right=True, top=True, axis='both')
+        #plt.axvline(0.3)
+        #plt.axhline(2)
+
+        ax.set_xlabel("(G-R)")
+        ax.set_ylabel("(U-G)")
+
+        startx=0.7
+        starty=1
+        plt.arrow(startx,starty, -((Cg-Cr)*minAv*0.5), -((Cu-Cg)*minAv*0.45), head_width=0.02)
+        plt.arrow(startx,starty, 0, -((Cu-Cg)*minAv*0.45), head_width=0.02)
+        plt.arrow(startx,starty-((Cu-Cg)*minAv*0.5), -((Cg-Cr)*minAv*0.5), 0, head_width=0.02)
+
+        plt.plot(np.nan, np.nan, marker='*', c='r', label="Reddened")
+        plt.plot(np.nan, np.nan, marker='*', c='b', label="DeReddened")
+        plt.plot(np.nan, np.nan, marker='*', c='k', label="Pleiades")
+        plt.legend(loc=3)
         plt.show()
 
 
@@ -469,7 +506,7 @@ class CATALOG(object):
         TMP gets distance to ngc from pleiedes
         """
         pleiades = np.genfromtxt("catalogs/pleiades_sloane")
-        pleides = pleiades[np.where( pleiades[:,2] < 11)]
+        pleiades = pleiades[np.where( pleiades[:,2] < 15)]
         pli_distance = 134
 
         fig = plt.figure()
@@ -477,6 +514,7 @@ class CATALOG(object):
         ax0.scatter(pleiades[:,1], pleiades[:,2])
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
+            #s.colours[1] += 0#0.07
             ax0.scatter(s.colours[1], s.MAG[0], c='k')
 
         plt.gca().invert_yaxis()
@@ -493,7 +531,7 @@ class CATALOG(object):
         sourceG=[]
         sourcedG=[]
         for s in self.sourcelist:
-            c = s.colours[1]+0.07
+            c = s.colours[1]
             if (np.isfinite(c)):
                 sourceG_R.append(c)
                 sourceG.append(s.MAG[0])
@@ -526,24 +564,29 @@ class CATALOG(object):
                 ax0.scatter(c0, pliMean, c='r')
 
 
-        chi = getCHI( np.array([ colour, dm, np.zeros((len(dm))), ddm]).T, 0)
-        print(chi['x'])
+        chi, coeffs = get_CHI( colour, dm, ddm, 0)
 
         x=np.arange(min(colour), max(colour),0.01)
-        y = np.polyval(list(reversed( chi['x'])), x)
+        y = np.polyval(list(reversed( coeffs)), x)
         fig=plt.figure()
 
         plt.scatter(colour, dm)
         plt.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
         plt.plot(x,y)
 
-        Dn = pli_distance *10.0**(-chi['x']/5.)
-        print(Dn)
-        #dDn = (-np.log(10.)/5.)*Dn*
-        #print( (-np.log(10.0)/5.) 
+        Dn = pli_distance *10.0**(-coeffs[0]/5.)
 
+        print('dist', Dn)
+        error = get_CHIerr(colour, dm, ddm, coeffs)
+        DnMAX = pli_distance*10.0**(-error[0]/5.)
+        DnMIN = pli_distance*10.0**(-error[1]/5.)
+        print(error)
+        print(DnMAX, DnMIN)
         plt.show()
+        distErr=0
 
+        for s in self.sourcelist:
+            s.set_distance(Dn, distErr)
 
 
     def cut_lowconfidence(self):
@@ -552,38 +595,59 @@ class CATALOG(object):
     def tmp_GRG(self):
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
-            plt.scatter(s.colours[1], s.MAG[0], c='k', s=0.5)
+            plt.scatter(s.colours[1], s.MAG[0], c='k')
         plt.gca().invert_yaxis()
 
     def __repr__(self):
         return("\x1b[1;32m%s\x1b[0m"%self.name)
     
-def chisqd(coeffs, x,y,yerr, order):
-    model = polynomial(coeffs, x, order)
-    return np.sum(((model - y)/yerr)**2.)
-
-def polynomial(coeffs, x, order):
-    y = 0
-    for i in range(order+1):
-        y+= coeffs[i]*x**i
-    return y
-
-
-def getCHI(data,order):
-
-    x = data[:,0]
-    y = data[:,1]
-    dx = data[:,2]
-    dy = data[:,3]
-    print(x)
-    initial=[1]*(order+1)
-    return optimize.minimize(chisqd, initial, args=(x, y, dy, order))
+#def chisqd(coeffs, x,y,yerr, order):
+#    model = polynomial(coeffs, x, order)
+#    return np.sum(((model - y)/yerr)**2.)
+#
+#def polynomial(coeffs, x, order):
+#    y = 0
+#    for i in range(order+1):
+#        y+= coeffs[i]*x**i
+#    return y
+#
+#def chiErr(coeffs, x, y, yerr, order):
+#    minchi = chisqd(coeffs, np.array(x), y, yerr, order)
+#    newcoeffs = np.linspace(coeffs[0]*0.98, coeffs[0]*1.02, 1000)
+#    fig=plt.figure()
+#    NewChi = np.zeros(newcoeffs.shape)
+#    e=[0,0]
+#    for i,c in enumerate(newcoeffs[1:-1]):
+#        NewChi[i] = chisqd([c], np.array(x) ,y,yerr,order)
+#        if(NewChi[i-1]>(1+minchi) and NewChi[i]<=(1+minchi)):
+#            e[0]=c
+#        if(NewChi[i-1]<=(1+minchi) and NewChi[i]>(1+minchi)):
+#            e[1]=c
+#
+#    print(e)
+#    print("+ %f"%(coeffs[0]-e[1]))
+#    print("- %f"%(e[0]-coeffs[0]))
+#    plt.scatter(newcoeffs[1:-1], NewChi[1:-1], c='k', s=0.5)
+#    plt.axhline(1+chisqd(coeffs, np.array(x), y, yerr, 0))
+#    plt.show()
+#    return e
+#
+#
+#def getCHI(data,order):
+#
+#    x = data[:,0]
+#    y = data[:,1]
+#    dx = data[:,2]
+#    dy = data[:,3]
+#    print(x)
+#    initial=[1]*(order+1)
+#    return optimize.minimize(chisqd, initial, args=(x, y, dy, order))
 
 
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BODGE.sb')
     """
     testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
     print(testdata)
