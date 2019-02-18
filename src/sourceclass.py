@@ -29,7 +29,7 @@ class Source(object):
         self.AbsoluteMag = np.zeros((bands))
 
         self.mass = 0
-        self.spectralType=''#['G',2,'V'] #type, subgroup, evolution
+        self.spectralType='X'#['G',2,'V'] #type, subgroup, evolution
         self.distance=0
 
         self.resolved = self.mag / self.mag

@@ -134,6 +134,7 @@ class CATALOG(object):
             fluxerr = [ 4*i + 4 for i in range(numBands)]
             mag = [ 4*i + 5 for i in range(numBands)]
             magerr = [ 4*i + 6 for i in range(numBands)]
+        #data = np.genfromtxt(filename, skip_header=4, names=True, excludelist=['SpecType'])
         data = np.genfromtxt(filename, skip_header=5)
         for i, line in enumerate(data):
             self.sourcelist[i] = Source(ID=i, ra=line[1], dec=line[2],
@@ -629,7 +630,7 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BODG.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BOD.sb')
     """
     testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
     print(testdata)
