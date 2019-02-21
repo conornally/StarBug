@@ -7,6 +7,8 @@ try:import parse_config
 except: import src.parse_config
 #try:from catclass import CATALOG
 #except:from src.catclass import CATALOG
+import matplotlib.pyplot as plt
+import astropy.visualization as viz
 
 logging.basicConfig(level='DEBUG')#, format="\x1b[1;%dm" % (32) + '%(message)s' + "\x1b[0m")
 
@@ -96,9 +98,13 @@ class FITS(object):
             self.get_fft()
             fitsobj.get_fft()
         convolution = np.multiply(self.fft, np.conj(fitsobj.fft))
-        plt.imshow(convolution)
-        plt.show()
         inverse = np.fft.ifft2(convolution)
+        stretch = viz.PowerStretch(0.4)
+        stretch = lambda x : x
+        plt.imshow(stretch(np.real(inverse)), cmap='pink')
+        plt.xlabel("Offset [pix]")
+        plt.ylabel("Offset [pix]")
+        plt.show()
         a = np.argmax(inverse)
         r = len(self.data[0])
         dx = a/r

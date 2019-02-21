@@ -1,7 +1,7 @@
 import os, numpy as np, logging, time
 np.warnings.filterwarnings('ignore')
 from scipy import optimize
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
 import astropy.units as u
@@ -135,7 +135,9 @@ class CATALOG(object):
             mag = [ 4*i + 5 for i in range(numBands)]
             magerr = [ 4*i + 6 for i in range(numBands)]
         #data = np.genfromtxt(filename, skip_header=4, names=True, excludelist=['SpecType'])
-        data = np.genfromtxt(filename, skip_header=5)
+        data = np.genfromtxt(filename, skip_header=5, dtype=str)
+        types = data[:,-1]
+        data = data[:-1].astype(float)
         for i, line in enumerate(data):
             self.sourcelist[i] = Source(ID=i, ra=line[1], dec=line[2],
                                         flux=line[flux], fluxerr=line[fluxerr],
@@ -630,7 +632,7 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884BOD.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='catalogs/ngc869_g_radec.fits_cropped.sb')
     """
     testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
     print(testdata)
@@ -648,6 +650,6 @@ if __name__=='__main__':
         cat.sourcelist[i].resolved = np.ones(np.shape(cat.sourcelist[i].resolved))
         print(cat.sourcelist[i].colours)
     """
-    #cat.dustCorrection()
-    cat.calculateDistance()
-    cat.calcSpectralTypes()
+    cat.dustCorrection()
+    #cat.calculateDistance()
+    #cat.calcSpectralTypes()
