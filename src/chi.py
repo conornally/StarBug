@@ -10,6 +10,10 @@ def get_CHI(x, y, dy, order):
     out= optimize.minimize(chisqd, initial, args=(x, y, dy))
     return(out['fun'], out['x'])
 
+
+def get_simpleChierr(coeffs, minX):
+    factor=0.01
+
 def get_CHIerr( x, y, dy, coeffs):
     factor=0.01
     sigma = np.sqrt( abs( 2*(len(x)-len(coeffs))))

@@ -7,7 +7,10 @@ class Source(object):
                         flux=np.nan, fluxerr=np.nan, 
                         mag=np.nan, magerr=np.nan, 
                         shp=np.nan, rnd=np.nan,
-                        bands=1, epochs=1):
+                        bands=1, epochs=1, 
+                        distance=0, distance_error=0,
+                        absoluteMag=np.nan, absoluteMagErr=np.nan, 
+                        spectype='X'):
         shape = np.ones((epochs, bands))
         self.ID =       ID
         self.x =        x*shape
@@ -26,11 +29,14 @@ class Source(object):
         self.FLUX = np.zeros((bands))
         self.FLUXERR = np.zeros((bands))
 
-        self.AbsoluteMag = np.zeros((bands))
+        #self.AbsoluteMag = np.zeros((bands))
+        self.AbsoluteMag = absoluteMag*np.ones((bands))
+        #self.AbsoluteMagErr = np.zeros((bands))
+        self.AbsoluteMagErr = absoluteMagErr*np.ones((bands))
 
-        self.mass = 0
-        self.spectralType='X'#['G',2,'V'] #type, subgroup, evolution
-        self.distance=0
+        self.spectralType = spectype#['G',2,'V'] #type, subgroup, evolution
+        self.distance = distance
+        self.distance_error = distance_error
 
         self.resolved = self.mag / self.mag
 
@@ -53,7 +59,7 @@ class Source(object):
         self.SHARP=     np.nanmean(self.shp,0)
         self.ROUND=     np.nanmean(self.rnd,0)
         self.calc_errors()
-        if self.distance: self._voidCalcAbsoluteMagnitudes()
+        #if self.distance: self._voidCalcAbsoluteMagnitudes()
 
     def calc_errors(self):
         #across epochs
@@ -156,9 +162,10 @@ class Source(object):
                 exportstring += "%f "%zero2nan(self.MAGERR[band])
         if(extras):
             exportstring += "%f "%self.distance
-            exportstring += "%f "%self.mass
+            exportstring += "%f "%self.distance_error
             for i in range(self.size[1]):
                 exportstring += "%f "%self.AbsoluteMag[i]
+                exportstring += "%f "%self.AbsoluteMagErr[i]
             exportstring+= "%s "%self.spectralType
 
         return exportstring
@@ -171,13 +178,15 @@ class Source(object):
         if(np.shape(Maglist) == np.shape(self.AbsoluteMag) and
                 np.shape(error)==np.shape(self.AbsoluteMag)):
             self.AbsoluteMag = Maglist
-            self.AbsoluteMagError = error
+            self.AbsoluteMagErr = error
 
 
     def _voidCalcAbsoluteMagnitudes(self):
         if(self.distance > 0):
+            self._voidCalcTileMeans()
             for i, apparentMag in enumerate(self.MAG):
                 self.AbsoluteMag[i] = apparentMag - 5*np.log10(self.distance/10.)
+                self.AbsoluteMagErr[i]=np.sqrt( (self.MAGERR[i]**2.0) + (-5.0*self.distance_error/(self.distance*np.log(10)))**2.0)
             
 
     def __getitem__(self, listRef):

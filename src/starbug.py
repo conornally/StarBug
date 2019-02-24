@@ -51,6 +51,7 @@ class StarBug:
                         'variable':self.addVariable,
                         # analysis
                         'stats': self.stats,
+                        'temp': self.telescopeTEMP,
                         'find': self.find,
                         # file manipulations
                         'update_header': self.update_header,
@@ -132,6 +133,31 @@ class StarBug:
             if hasattr(self, 'options'):
                 f.load_options(self.options)
             f.find()
+
+    def telescopeTEMP(self):
+        #just for a report
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        temps = []
+        means = []
+        for f in self.get_group():
+            print(f)
+            temps.append(f.header['CCD-TEMP'])
+            means.append(np.nanmean(f.data))
+        x = range(1, len(temps)+1)
+        ax1.plot(x, means, c='k', label="Mean pixel count")
+        ax1.set_ylabel("Mean Pixel Value [Counts]")
+
+        ax2.plot(x, temps, c='r', label="CCD temperature")
+        ax2.set_ylabel(r"CCD temperature [$^o$C]")
+        ax2.plot(np.nan, np.nan, c='k', label="Mean pixel count")
+        ax2.legend()
+        
+        ax1.set_xlabel('Exposure Number')
+        plt.tight_layout()
+        fig.savefig('out/%s_temperature.png'%f.name, dpi=300)
+        plt.show()
+
 
 
 

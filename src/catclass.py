@@ -2,6 +2,7 @@ import os, numpy as np, logging, time
 np.warnings.filterwarnings('ignore')
 from scipy import optimize
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 from astropy.coordinates import match_coordinates_sky, Angle, SkyCoord
 import astropy.units as u
@@ -129,21 +130,58 @@ class CATALOG(object):
             length= int(catalog.readline().split(' ')[-1])
             numEpochs = int(catalog.readline().split(' ')[-1])
             numBands = int(catalog.readline().split(' ')[-1])
+            names = catalog.readline().split(' ')
             self.sourcelist = np.empty((length), dtype=object)
             flux = [ 4*i + 3 for i in range(numBands)]
             fluxerr = [ 4*i + 4 for i in range(numBands)]
             mag = [ 4*i + 5 for i in range(numBands)]
             magerr = [ 4*i + 6 for i in range(numBands)]
+
+            if("Distance" in names): distance = names.index("Distance")
+            if("DistanceError" in names): distance_error = names.index("DistanceError")
+
+            i_flux  = []
+            i_fluxerr= []
+            i_mag   = []
+            i_magerr= []
+            i_distance=[]
+            i_distanceError=[]
+            i_absoluteMag=[]
+            i_absoluteMagError=[]
+            i_spectype=[]
+            for i, name in enumerate(names):
+                print(name)
+                if('FLUX:' in name): i_flux.append(i)
+                elif('FLUXERR:' in name): i_fluxerr.append(i)
+                elif('ABSOLMAG:' in name): i_absoluteMag.append(i) #for now, absolmag comes before mag as MAG in ABSOLMAG
+                elif('ABSOLMAGERR:' in name): i_absoluteMagError.append(i)
+                elif('MAG:' in name): i_mag.append(i)
+                elif('MAGERR:' in name): i_magerr.append(i)
+                elif('DistanceError' in name): i_distanceError.append(i)
+                elif('Distance' in name): i_distance.append(i)
+                elif('SpecType' in name): i_spectype.append(i)
+
         #data = np.genfromtxt(filename, skip_header=4, names=True, excludelist=['SpecType'])
         data = np.genfromtxt(filename, skip_header=5, dtype=str)
-        types = data[:,-1]
-        data = data[:-1].astype(float)
+        types=data[:,i_spectype]
+        data = data[:,:-1].astype(float)
+
+        print(i_distance)
+
+
         for i, line in enumerate(data):
+            if(i_spectype): spectype = types[i,0]
+            else: spectype='X'
             self.sourcelist[i] = Source(ID=i, ra=line[1], dec=line[2],
                                         flux=line[flux], fluxerr=line[fluxerr],
                                         mag=line[mag], magerr=line[magerr],
-                                        epochs=numEpochs, bands=numBands)
+                                        epochs=numEpochs, bands=numBands, 
+                                        distance=line[i_distance], distance_error=line[i_distanceError],
+                                        absoluteMag=line[i_absoluteMag], absoluteMagErr=line[i_absoluteMagError],
+                                        spectype=spectype)
         if i < length: self.sourcelist = self.sourcelist[:i]
+        s = self.sourcelist[0]
+        print(s.distance)
 
             
 
@@ -368,9 +406,10 @@ class CATALOG(object):
                 outcat.write("FLUXERR:%d "%b )
                 outcat.write("MAG:%d "%b )
                 outcat.write("MAGERR:%d "%b )
-            outcat.write("Distance Mass ")
+            outcat.write("Distance DistanceError ")
             for i in range(self.sourcelist[0].size[1]):
                 outcat.write("ABSOLMAG:%d "%i)
+                outcat.write("ABSOLMAGERR:%d "%i)
             outcat.write("SpecType ")
             for i,s in enumerate(self.sourcelist,1):
                 outcat.write("\n%d %s"%(i, s.createExportString(style='mean tiles')))
@@ -418,7 +457,7 @@ class CATALOG(object):
 
         for s in self.sourcelist: s.mag[:,2] += 1
 
-        Av = np.linspace(0.12,0.2,30)
+        Av = np.linspace(0.12,0.21,40)
         Chivals = np.zeros(Av.shape)
         #fig = plt.figure()
         for i, av in enumerate(Av):
@@ -439,62 +478,72 @@ class CATALOG(object):
         minAv = Av[np.argmin(Chivals)]
         print("E(U,G): %f"%(minAv*(Cu-Cg)))
         print("E(G,R): %f"%(minAv*(Cg-Cr)))
+        print(minAv)
         print("Au: %f"%(minAv*Cu))
         print("Ar: %f"%(minAv*Cr))
         print("Ag: %f"%(minAv*Cg))
+        for i in range(len(Chivals)-1):
+            if((Chivals[i] > (min(Chivals)+1)) and (Chivals[i+1] < (min(Chivals)+1))): avLow = Av[i]
+            if((Chivals[i] < (min(Chivals)+1)) and (Chivals[i+1] > (min(Chivals)+1))): avHigh = Av[i]
 
         chix=[]
         chiy=[]
         chiyerr=[]
 
-        fig = plt.figure()
-        ax = plt.subplot(111)
+        fig = plt.figure(figsize=(6,8))
+        gs = GridSpec(5,3, hspace=0.9)
+
+        ax = plt.subplot(gs[:3,:])
+        plt.gca().invert_yaxis()
+        ax2 = plt.subplot(gs[3:,:])
 
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
-            if np.isfinite(sum(s.colours)):
-                ax.scatter(s.colours[1], s.colours[0], c='r', marker='*', s=10) 
-                s.mag[:,0]-=(Cg*minAv)
-                s.mag[:,1]-=(Cr*minAv) #+0.07
-                s.mag[:,2]-=(Cu*minAv)
+            ax.scatter(s.colours[1], s.colours[0], c='r', marker='*', s=10) 
+            s.mag[:,0]-=(Cg*minAv)
+            s.mag[:,1]-=(Cr*minAv) #+0.07
+            s.mag[:,2]-=(Cu*minAv)
 
-                s.construct_colours([2,0],[0,1])
-                chix.append(s.colours[1])
-                chiy.append(s.colours[0])
-                chiyerr.append(np.sqrt(s.colourError[0]**2.0 + (np.polyval(deriv_coeffs, s.colours[1])*s.colourError[1])**2.0))
+            s.magerr[:,0] = np.sqrt( s.magerr[:,0]**2.0 + (Cg*0.5*(avLow+avHigh))**2.0)
+            s.magerr[:,1] = np.sqrt( s.magerr[:,1]**2.0 + (Cr*0.5*(avLow+avHigh))**2.0)
+            s.magerr[:,2] = np.sqrt( s.magerr[:,2]**2.0 + (Cu*0.5*(avLow+avHigh))**2.0)
 
-                ax.scatter(s.colours[1], s.colours[0], c='b', marker='*', s=10)
-
+            s.construct_colours([2,0],[0,1])
+            ax.scatter(s.colours[1], s.colours[0], c='b', marker='*', s=10)
 
 
-        print(get_CHIerr(chix,chiy,chiyerr, coeffs))
-        """
-        plt.plot( (Cg-Cr)*Av, (Cu-Cg)*Av)
-        plt.plot(x,y)
-        plt.plot(x,dy)
-        plt.plot(Av, -np.log(Chivals))
-        """
-        plt.gca().invert_yaxis()
+        #print(get_CHIerr(chix,chiy,chiyerr, coeffs))
         ax.scatter(mainsequence[:,1], mainsequence[:,0], c='k', s=10)
         ax.plot(x,y)
         ax.tick_params(direction='in', which='both', right=True, top=True, axis='both')
+        ax2.tick_params(direction='in', which='both', right=True, top=True, axis='both')
         #plt.axvline(0.3)
         #plt.axhline(2)
 
-        ax.set_xlabel("(G-R)")
-        ax.set_ylabel("(U-G)")
+        ax.set_xlabel("(g-r)")
+        ax.set_ylabel("(u-g)")
 
         startx=0.7
         starty=1
-        plt.arrow(startx,starty, -((Cg-Cr)*minAv*0.5), -((Cu-Cg)*minAv*0.45), head_width=0.02)
-        plt.arrow(startx,starty, 0, -((Cu-Cg)*minAv*0.45), head_width=0.02)
-        plt.arrow(startx,starty-((Cu-Cg)*minAv*0.5), -((Cg-Cr)*minAv*0.5), 0, head_width=0.02)
+        ax.arrow(startx,starty, -((Cg-Cr)*minAv*0.5), -((Cu-Cg)*minAv*0.4), head_width=0.02)
+        ax.arrow(startx,starty, 0, -((Cu-Cg)*minAv*0.4), head_width=0.02)
+        ax.arrow(startx,starty-((Cu-Cg)*minAv*0.5), -((Cg-Cr)*minAv*0.5), 0, head_width=0.02)
 
-        plt.plot(np.nan, np.nan, marker='*', c='r', label="Reddened")
-        plt.plot(np.nan, np.nan, marker='*', c='b', label="DeReddened")
-        plt.plot(np.nan, np.nan, marker='*', c='k', label="Pleiades")
-        plt.legend(loc=3)
-        plt.show()
+        ax.plot(np.nan, np.nan, marker='*', c='r', label="Reddened")
+        ax.plot(np.nan, np.nan, marker='*', c='b', label="DeReddened")
+        ax.plot(np.nan, np.nan, marker='*', c='k', label="Pleiades")
+        ax.legend(loc=3)
+
+        ax2.plot(Av, Chivals, c='k', label=r"$Av: %.3f^{+%.3f}_{-%.3f}$"%(minAv, avHigh-minAv, minAv-avLow)) 
+        ax2.set_xlabel('Av')
+        ax2.set_ylabel(r'$\chi^2$')
+        ax2.legend()
+
+        ax2.axvline(avLow,c='r')
+        ax2.axvline(minAv,c='b')
+        ax2.axvline(avHigh,c='g')
+        gs.tight_layout(fig)
+        fig.savefig('out/%s_dust.png'%self.name)
 
 
     def a(self, x):
@@ -518,7 +567,8 @@ class CATALOG(object):
         pli_distance = 134
 
         fig = plt.figure()
-        ax0 = plt.subplot(211)
+        gs = GridSpec(2,2)
+        ax0 = plt.subplot(gs[0,:])
         ax0.scatter(pleiades[:,1], pleiades[:,2], c='k', marker='*')
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
@@ -526,6 +576,7 @@ class CATALOG(object):
             ax0.scatter(s.colours[1], s.MAG[0], c='b', marker='*')
 
         plt.gca().invert_yaxis()
+        ax2 = plt.subplot(gs[1,:], sharex=ax0)
 
         colourmin=np.nanmin(pleiades[:,1])
         colourmax=np.nanmax(pleiades[:,1])
@@ -566,34 +617,32 @@ class CATALOG(object):
                 #ax0.scatter(c0, pliMean, c='r', marker='x')
 
 
-        chi, coeffs = get_CHI( colour, dm, ddm, 0)
+        deltaM = np.nanmean(dm)
+        deltaMerr = np.sqrt( np.nansum( [ (x/len(dm))**2. for x in ddm]))
+        Dn = pli_distance *10.0**(-deltaM/5.)
+        dDn= np.sqrt((( (-pli_distance*np.log(10)/5.)*10.0**(-deltaM/5.)  )*deltaMerr)**2.0)
+        print(Dn, dDn)
 
-        x=np.arange(min(colour), max(colour),0.01)
-        y = np.polyval(list(reversed( coeffs)), x)
-        ax2=plt.subplot(212, sharex=ax0)
-        ax2.scatter(colour, dm, s=5)
-        ax2.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1)
-        ax2.plot(x,y)
+        ax2.scatter(colour, dm, s=5, c='k')
+        ax2.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1, c='k')
         ax0.tick_params(direction='in', labelbottom=False)
         ax2.tick_params(direction='in')
+        #ax2.axhline(deltaM, c='xkcd:magenta')
+        ax2.axhline(deltaM+deltaMerr, c='xkcd:magenta')
+        ax2.axhline(deltaM-deltaMerr, c='xkcd:magenta')
 
-        ax2.set_xlabel('G-R')
+        ax2.set_xlabel('(g-r)')
         ax2.set_ylabel(r'$\delta$M')
-        ax0.set_ylabel('G')
+        ax0.set_ylabel('g')
 
-        Dn = pli_distance *10.0**(-coeffs[0]/5.)
+        gs.tight_layout(fig)
 
-        print('dist', Dn)
-        error = get_CHIerr(colour, dm, ddm, coeffs)
-        DnMAX = pli_distance*10.0**(-error[0]/5.)
-        DnMIN = pli_distance*10.0**(-error[1]/5.)
-        print(error)
-        print(DnMAX, DnMIN)
-        plt.show()
-        distErr=0
 
         for s in self.sourcelist:
-            s.set_distance(Dn, distErr)
+            s.set_distance(Dn, dDn)
+            s._voidCalcAbsoluteMagnitudes()
+        fig.savefig('out/%s_distance.png'%self.name)
+
 
 
     def calcAbsoluteMags(self):
@@ -632,24 +681,17 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='catalogs/ngc869_g_radec.fits_cropped.sb')
-    """
-    testdata = np.genfromtxt("test/dereddening_teststars.txt", skip_header=1)
-    print(testdata)
-    u=0
-    g=-testdata[:,0]
-    r=g-testdata[:,3]
-    cat.sourcelist = cat.sourcelist[:len(testdata)]
-    for i in range(len(cat.sourcelist)):
-        cat.sourcelist[i].mag[0,0] = g[i]
-        cat.sourcelist[i].mag[0,1] = r[i]
-        cat.sourcelist[i].mag[0,2] = u
-        cat.sourcelist[i].colourError[0] = testdata[:,1][i]
-        cat.sourcelist[i].colourError[1] = testdata[:,3][i]
-        cat.sourcelist[i].set_colours(testdata[i,2], testdata[i,0])
-        cat.sourcelist[i].resolved = np.ones(np.shape(cat.sourcelist[i].resolved))
-        print(cat.sourcelist[i].colours)
-    """
+    cat = CATALOG(catalog_style='starbug', catalog_filename='catalogs/ngc884_g_radec.fits_cropped.sb')
+
+    print(cat.sourcelist[0].MAGERR)
     cat.dustCorrection()
-    #cat.calculateDistance()
-    #cat.calcSpectralTypes()
+    print(cat.sourcelist[0].MAGERR)
+    cat.calculateDistance()
+    for i in range(0):
+        print(cat.sourcelist[i].distance)
+        print(cat.sourcelist[i].distance_error)
+        print(cat.sourcelist[i].AbsoluteMag)
+        print(cat.sourcelist[i].AbsoluteMagErr)
+        print(cat.sourcelist[i].MAG)
+        print(cat.sourcelist[i].MAGERR)
+    cat.calcSpectralTypes()
