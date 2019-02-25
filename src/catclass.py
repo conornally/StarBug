@@ -445,7 +445,7 @@ class CATALOG(object):
         print(Cu, Cg, Cr)
 
         logging.info("dust correction")
-        mainsequence = np.genfromtxt("catalogs/pleiades_sloane")
+        mainsequence = np.genfromtxt("catalogs/mainsequence.cat")
         mask = ( mainsequence[:,1]<0.7)
         mainsequence = mainsequence[mask]
         coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
@@ -455,9 +455,9 @@ class CATALOG(object):
         y=np.polyval(coeffs, x)
         dy=np.polyval(deriv_coeffs, x)
 
-        for s in self.sourcelist: s.mag[:,2] += 1
+        #for s in self.sourcelist: s.mag[:,2] += 1
 
-        Av = np.linspace(0.12,0.21,40)
+        Av = np.linspace(0.0,0.6,400)
         Chivals = np.zeros(Av.shape)
         #fig = plt.figure()
         for i, av in enumerate(Av):
