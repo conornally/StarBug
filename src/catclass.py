@@ -631,9 +631,9 @@ class CATALOG(object):
         ax2.axhline(deltaM+deltaMerr, c='xkcd:magenta')
         ax2.axhline(deltaM-deltaMerr, c='xkcd:magenta')
 
-        ax2.set_xlabel('(g-r)')
-        ax2.set_ylabel(r'$\delta$M')
-        ax0.set_ylabel('g')
+        ax2.set_xlabel(r'$(g-r)_0$')
+        ax2.set_ylabel(r'$\Delta$M')
+        ax0.set_ylabel(r'$g_0$')
 
         gs.tight_layout(fig)
 
