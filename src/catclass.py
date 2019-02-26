@@ -448,7 +448,7 @@ class CATALOG(object):
         mainsequence = np.genfromtxt("catalogs/mainsequence.cat")
         mask = ( mainsequence[:,1]<0.7)
         mainsequence = mainsequence[mask]
-        coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
+        coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,2],6)
         deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))[:-1]
 
         x=np.arange(-0.3,0.75,0.001)
