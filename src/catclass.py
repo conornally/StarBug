@@ -163,25 +163,25 @@ class CATALOG(object):
 
         #data = np.genfromtxt(filename, skip_header=4, names=True, excludelist=['SpecType'])
         data = np.genfromtxt(filename, skip_header=5, dtype=str)
-        types=data[:,i_spectype]
-        data = data[:,:-1].astype(float)
+        if(i_spectype):
+            types=data[:,i_spectype]
+            data = data[:,:-1].astype(float)
+        else: data = data.astype(float)
 
-        print(i_distance)
 
 
         for i, line in enumerate(data):
             if(i_spectype): spectype = types[i,0]
             else: spectype='X'
             self.sourcelist[i] = Source(ID=i, ra=line[1], dec=line[2],
-                                        flux=line[flux], fluxerr=line[fluxerr],
-                                        mag=line[mag], magerr=line[magerr],
-                                        epochs=numEpochs, bands=numBands, 
-                                        distance=line[i_distance], distance_error=line[i_distanceError],
-                                        absoluteMag=line[i_absoluteMag], absoluteMagErr=line[i_absoluteMagError],
-                                        spectype=spectype)
+                                        flux=line[i_flux], fluxerr=line[i_fluxerr],
+                                        mag=line[i_mag], magerr=line[i_magerr],
+                                        epochs=numEpochs, bands=numBands)#, 
+                                        #distance=line[i_distance], distance_error=line[i_distanceError],
+                                        #absoluteMag=line[i_absoluteMag], absoluteMagErr=line[i_absoluteMagError],
+                                        #spectype=spectype)
         if i < length: self.sourcelist = self.sourcelist[:i]
         s = self.sourcelist[0]
-        print(s.distance)
 
             
 
@@ -438,32 +438,31 @@ class CATALOG(object):
 
         Rv= 3.1
 
-        Cu = self.a(U) + self.b(U)/Rv
-        Cg = self.a(G) + self.b(G)/Rv
-        Cr = self.a(R) + self.b(R)/Rv
+        Cu = self.a(1./U) + self.b(1./U)/Rv
+        Cg = self.a(1./G) + self.b(1./G)/Rv
+        Cr = self.a(1./R) + self.b(1./R)/Rv
 
-        print(Cu, Cg, Cr)
 
         logging.info("dust correction")
-        mainsequence = np.genfromtxt("catalogs/mainsequence.cat")
-        mask = ( mainsequence[:,1]<0.7)
+        mainsequence = np.genfromtxt("/home/conor/scripts/StarBug/catalogs/mainsequence.cat")
+        mask = ( mainsequence[:,1]<0.6)*(mainsequence[:,1]>-0.5)
         mainsequence = mainsequence[mask]
-        coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,0],6)
+        coeffs = np.polyfit(mainsequence[:,1], mainsequence[:,2],4)
         deriv_coeffs = list(reversed([ i*c for i, c in enumerate(reversed(coeffs))]))[:-1]
 
-        x=np.arange(-0.3,0.75,0.001)
+        x=np.arange(-0.7,0.75,0.001)
         y=np.polyval(coeffs, x)
         dy=np.polyval(deriv_coeffs, x)
 
-        #for s in self.sourcelist: s.mag[:,2] += 1
+        #for s in self.sourcelist: s.mag[:,1] += 0.1
 
-        Av = np.linspace(0.0,0.6,400)
+        Av = np.linspace(0.0,2.5,60)
         Chivals = np.zeros(Av.shape)
         #fig = plt.figure()
         for i, av in enumerate(Av):
             for s in self.sourcelist:
                 s.construct_colours([2,0],[0,1])
-                if(s.colours[1]>0.3 and s.colours[0]<2):
+                if(s.colours[0]<2 and s.colours[1]>0.3):
                     s.colours[1] = np.nan
                 s.colours[0]-= ((Cu-Cg)*av)
                 s.colours[1]-= ((Cg-Cr)*av)
@@ -474,14 +473,19 @@ class CATALOG(object):
                     Chivals[i] += schi
                     #plt.scatter(s.colours[1], s.colours[0],c='k', s=0.1)
                     #plt.scatter(s.colours[1], np.polyval(coeffs, s.colours[1]), c='k')
-            print(av, Chivals[i])
+            print(av, Chivals[i], av*(Cu-Cg))
         minAv = Av[np.argmin(Chivals)]
+        print(Cu, Cg, Cr)
         print("E(U,G): %f"%(minAv*(Cu-Cg)))
         print("E(G,R): %f"%(minAv*(Cg-Cr)))
+        print("E(B-V): %f"%(0.336748*minAv))
         print(minAv)
         print("Au: %f"%(minAv*Cu))
         print("Ar: %f"%(minAv*Cr))
         print("Ag: %f"%(minAv*Cg))
+
+        avLow=0
+        avHigh=0
         for i in range(len(Chivals)-1):
             if((Chivals[i] > (min(Chivals)+1)) and (Chivals[i+1] < (min(Chivals)+1))): avLow = Av[i]
             if((Chivals[i] < (min(Chivals)+1)) and (Chivals[i+1] > (min(Chivals)+1))): avHigh = Av[i]
@@ -496,6 +500,9 @@ class CATALOG(object):
         ax = plt.subplot(gs[:3,:])
         plt.gca().invert_yaxis()
         ax2 = plt.subplot(gs[3:,:])
+        ax.axvline(-0.526)
+        ax.axhline(-0.252)
+        ax.scatter(mainsequence[:,1], mainsequence[:,2], c='k', s=10)
 
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
@@ -513,7 +520,6 @@ class CATALOG(object):
 
 
         #print(get_CHIerr(chix,chiy,chiyerr, coeffs))
-        ax.scatter(mainsequence[:,1], mainsequence[:,0], c='k', s=10)
         ax.plot(x,y)
         ax.tick_params(direction='in', which='both', right=True, top=True, axis='both')
         ax2.tick_params(direction='in', which='both', right=True, top=True, axis='both')
@@ -524,7 +530,7 @@ class CATALOG(object):
         ax.set_ylabel("(u-g)")
 
         startx=0.7
-        starty=1
+        starty=0
         ax.arrow(startx,starty, -((Cg-Cr)*minAv*0.5), -((Cu-Cg)*minAv*0.4), head_width=0.02)
         ax.arrow(startx,starty, 0, -((Cu-Cg)*minAv*0.4), head_width=0.02)
         ax.arrow(startx,starty-((Cu-Cg)*minAv*0.5), -((Cg-Cr)*minAv*0.5), 0, head_width=0.02)
@@ -562,21 +568,27 @@ class CATALOG(object):
         TMP gets distance to ngc from pleiedes
         """
         pleiades = np.genfromtxt("/home/conor/scripts/StarBug/catalogs/pleiades_sloane")
-        pleiades = pleiades[np.where( pleiades[:,2] < 15)]
+        pleiades = pleiades[np.where( pleiades[:,0] < 15)]
         pleiades = pleiades[np.where( pleiades[:,1] < 0.3)]
+        #pleiades = pleiades[np.where( pleiades[:,1] >-0.7)]
         pli_distance = 134
+        #pli_distance = 2327#NOT PLI
+
+        ig=0
+        igr=1
+        iug=2
 
         fig = plt.figure()
-        gs = GridSpec(2,2)
-        ax0 = plt.subplot(gs[0,:])
-        ax0.scatter(pleiades[:,1], pleiades[:,2], c='k', marker='*')
+        gs = GridSpec(5,2)
+        ax0 = plt.subplot(gs[0:3,:])
+        ax0.scatter(pleiades[:,1], pleiades[:,ig], c='k', marker='*')
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
-            if(s.colours[1]>0.25 or s.colours[1]<-0.4): s.colours[1] = np.nan
+            if(s.colours[1]>0.25 or s.colours[1]<-0.6): s.colours[1] = np.nan
             ax0.scatter(s.colours[1], s.MAG[0], c='b', marker='*')
 
         plt.gca().invert_yaxis()
-        ax2 = plt.subplot(gs[1,:], sharex=ax0)
+        ax2 = plt.subplot(gs[3:,:], sharex=ax0)
 
         colourmin=np.nanmin(pleiades[:,1])
         colourmax=np.nanmax(pleiades[:,1])
@@ -602,12 +614,12 @@ class CATALOG(object):
             c0 = Range[i]
             c1 = Range[i+1]
             pliMask = ( pleiades[:,1]>=c0 ) * (pleiades[:,1]<c1)            
-            pliMean = np.mean(pleiades[:,2][pliMask])
+            pliMean = np.mean(pleiades[:,ig][pliMask])
 
             catMask = ( sourceG_R>=c0 ) * ( sourceG_R<c1 )
             catMean = np.nanmean(sourceG[catMask])
             if(np.isfinite(catMean) and np.isfinite(pliMean)):
-                pliErr = np.std( pleiades[:,2][pliMask])
+                pliErr = np.std( pleiades[:,ig][pliMask])
                 catErr = np.sqrt( sum( [ (em/len(sourcedG[catMask]))**2. for em in sourcedG[catMask] ] ) )
                 if(pliErr<1 and catErr <1 and Range[i]<0.17):
                     dm.append(pliMean - catMean)
@@ -641,6 +653,7 @@ class CATALOG(object):
         for s in self.sourcelist:
             s.set_distance(Dn, dDn)
             s._voidCalcAbsoluteMagnitudes()
+        #plt.show()
         fig.savefig('out/%s_distance.png'%self.name)
 
 
@@ -666,6 +679,7 @@ class CATALOG(object):
         self.sourcelist = [s for s in self.sourcelist if s.quality]
         
     def tmp_GRG(self):
+        fig=plt.figure()
         for s in self.sourcelist:
             s.construct_colours([2,0],[0,1])
             plt.scatter(s.colours[1], s.AbsoluteMag[0], c='k')
@@ -681,8 +695,9 @@ class CATALOG(object):
 
 if __name__=='__main__':
     #cat = CATALOG(fitsfile="../test/ngc884_g_radec.fits", configfile='../config', catalog_style='sextractor', catalog_filename='../test/ngc884_g.cat')
-    cat = CATALOG(catalog_style='starbug', catalog_filename='catalogs/ngc884_g_radec.fits_cropped.sb')
+    cat = CATALOG(catalog_style='starbug', catalog_filename='out/ngc884.sb')
 
+    """
     print(cat.sourcelist[0].MAGERR)
     cat.dustCorrection()
     print(cat.sourcelist[0].MAGERR)
@@ -695,3 +710,10 @@ if __name__=='__main__':
         print(cat.sourcelist[i].MAG)
         print(cat.sourcelist[i].MAGERR)
     cat.calcSpectralTypes()
+    """
+    U = 0.3543 #um
+    G = 0.4770 #um
+    R = 0.6231 #um
+    print(U)
+    print( cat.a(1./U) )
+    print( cat.b(1./U) )
