@@ -1,0 +1,233 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BandMatch	src/catclass.py	/^    def BandMatch(self, CAT):$/;"	m	class:CATALOG
+CATALOG	src/catclass.py	/^class CATALOG(object):$/;"	c
+EpochMatch	src/catclass.py	/^    def EpochMatch(self, CAT):$/;"	m	class:CATALOG
+FITS	src/fitsclass.py	/^class FITS(object):$/;"	c
+G	src/catclass.py	/^    G = 0.4770 #um$/;"	v
+NullMatch	src/catclass.py	/^    def NullMatch(self):$/;"	m	class:CATALOG
+R	src/catclass.py	/^    R = 0.6231 #um$/;"	v
+Source	src/sourceclass.py	/^class Source(object):$/;"	c
+Source	src/xsourceclass.py	/^class Source(object):$/;"	c
+StarBug	src/starbug.py	/^class StarBug:$/;"	c
+TileMatch	src/catclass.py	/^    def TileMatch(self, CAT):$/;"	m	class:CATALOG
+U	src/catclass.py	/^    U = 0.3543 #um$/;"	v
+__getitem__	src/sourceclass.py	/^    def __getitem__(self, listRef):$/;"	m	class:Source	file:
+__init__	src/catclass.py	/^    def __init__(self, fitsfile=None, catalog_style='custom', catalog_filename='', catalog=None, configfile='config'):$/;"	m	class:CATALOG
+__init__	src/fitsclass.py	/^    def __init__(self, filename):$/;"	m	class:FITS
+__init__	src/sourceclass.py	/^    def __init__(self,  ID=np.nan, $/;"	m	class:Source
+__init__	src/starbug.py	/^    def __init__(self):$/;"	m	class:StarBug
+__init__	src/xsourceclass.py	/^    def __init__(self,  ID=np.nan, $/;"	m	class:Source
+__repr__	src/catclass.py	/^    def __repr__(self):$/;"	m	class:CATALOG	file:
+__repr__	src/fitsclass.py	/^    def __repr__(self):$/;"	m	class:FITS	file:
+__repr__	src/sourceclass.py	/^    def __repr__(self):$/;"	m	class:Source	file:
+__repr__	src/xsourceclass.py	/^    def __repr__(self):$/;"	m	class:Source	file:
+_completeGROUP	src/starbug.py	/^    def _completeGROUP(self, text, state):$/;"	m	class:StarBug
+_loadStarBugData	src/catclass.py	/^    def _loadStarBugData(self, filename):$/;"	m	class:CATALOG
+_loadcatAUTO	src/starbug.py	/^    def _loadcatAUTO(self, catname, catalog_filename, fitsfilename, catalog_style='sextractor'):$/;"	m	class:StarBug
+_voidCalcAbsoluteMagnitudes	src/sourceclass.py	/^    def _voidCalcAbsoluteMagnitudes(self):$/;"	m	class:Source
+_voidCalcTileMeans	src/sourceclass.py	/^    def _voidCalcTileMeans(self):$/;"	m	class:Source
+a	src/catclass.py	/^    def a(self, x):$/;"	m	class:CATALOG
+a	tools/dustcorrection.py	/^def a(x):$/;"	f
+a1	src/tests/add_offset.py	/^a1 = np.copy(nullar)$/;"	v
+a1	src/tests/add_offset.py	/^a1 = np.ones((4,5))$/;"	v
+a2	src/tests/add_offset.py	/^a2 = np.zeros((4,5))$/;"	v
+add	src/fitsclass.py	/^    def add(self, fitsobj):$/;"	m	class:FITS
+add	src/starbug.py	/^    def add(self):$/;"	m	class:StarBug
+addVariable	src/starbug.py	/^    def addVariable(self):$/;"	m	class:StarBug
+add_mean	src/fitsclass.py	/^    def add_mean(self, fitsobj):$/;"	m	class:FITS
+add_median	src/fitsclass.py	/^    def add_median(self, fitsobj):$/;"	m	class:FITS
+add_with_offset	src/fitsclass.py	/^    def add_with_offset(self, fitsobj, offset=(0,0)):$/;"	m	class:FITS
+align	src/common_tasks.py	/^def align(fitslist):$/;"	f
+allp	tools/scConvert.py	/^    allp = line.rstrip().split(delimiter)$/;"	v
+append_Band	src/sourceclass.py	/^    def append_Band(self, source=False, bad=False):$/;"	m	class:Source
+append_Band	src/xsourceclass.py	/^    def append_Band(self, source=False, bad=False):$/;"	m	class:Source
+append_Epoch	src/sourceclass.py	/^    def append_Epoch(self, source=False, bad=False):$/;"	m	class:Source
+append_Epoch	src/xsourceclass.py	/^    def append_Epoch(self, source=False, bad=False):$/;"	m	class:Source
+append_Tile	src/sourceclass.py	/^    def append_Tile(self, source=False, bad=False):$/;"	m	class:Source
+append_Tile	src/xsourceclass.py	/^    def append_Tile(self, source=False, bad=False):$/;"	m	class:Source
+args	main.py	/^args = parser.parse_args()$/;"	v
+b	src/catclass.py	/^    def b(self, x):$/;"	m	class:CATALOG
+b	tools/dustcorrection.py	/^def b(x):$/;"	f
+bandMatch	src/starbug.py	/^    def bandMatch(self):$/;"	m	class:StarBug
+basic_stats	src/common_tasks.py	/^def basic_stats( fitslist, sigma=5, iters=3):$/;"	f
+basic_stats	src/fitsclass.py	/^    def basic_stats(self, sigma, iters=3):$/;"	m	class:FITS
+build_dark	src/starbug.py	/^    def build_dark(self):$/;"	m	class:StarBug
+build_flat	src/starbug.py	/^    def build_flat(self):$/;"	m	class:StarBug
+build_sourcelist	src/catclass.py	/^    def build_sourcelist(self):$/;"	m	class:CATALOG
+calcAbsoluteMags	src/catclass.py	/^    def calcAbsoluteMags(self):$/;"	m	class:CATALOG
+calcAbsoluteMags	src/starbug.py	/^    def calcAbsoluteMags(self):$/;"	m	class:StarBug
+calcSpectralType	src/starbug.py	/^    def calcSpectralType(self):$/;"	m	class:StarBug
+calcSpectralTypes	src/catclass.py	/^    def calcSpectralTypes(self):$/;"	m	class:CATALOG
+calc_errors	src/sourceclass.py	/^    def calc_errors(self):$/;"	m	class:Source
+calc_errors	src/xsourceclass.py	/^    def calc_errors(self):$/;"	m	class:Source
+calculateDistance	src/catclass.py	/^    def calculateDistance(self):$/;"	m	class:CATALOG
+calculate_offset	src/starbug.py	/^    def calculate_offset(self):$/;"	m	class:StarBug
+calibrate	src/catclass.py	/^    def calibrate(self, zeropoints=[0]):$/;"	m	class:CATALOG
+cat	src/catclass.py	/^    cat = CATALOG(catalog_style='starbug', catalog_filename='out\/ngc884.sb')$/;"	v
+cat_cutlowconfidence	src/starbug.py	/^    def cat_cutlowconfidence(self):$/;"	m	class:StarBug
+catcalibrate	src/starbug.py	/^    def catcalibrate(self):$/;"	m	class:StarBug
+catcombine	src/starbug.py	/^    def catcombine(self):$/;"	m	class:StarBug
+catdisplay	src/starbug.py	/^    def catdisplay(self):$/;"	m	class:StarBug
+chisqd	src/chi.py	/^def chisqd(coeffs, x, y, yerr):$/;"	f
+chisqd	src/simple_chisq.py	/^def chisqd(coeffs, x,y,yerr, order):$/;"	f
+clean	src/starbug.py	/^    def clean(self):$/;"	m	class:StarBug
+clip_below	src/fitsclass.py	/^    def clip_below(self, value):$/;"	m	class:FITS
+cmag	src/starbug.py	/^    def cmag(self):$/;"	m	class:StarBug
+col	tools/scConvert.py	/^        col = letters[column]$/;"	v
+column	tools/scConvert.py	/^    column = 0$/;"	v
+combine	src/catclass.py	/^    def combine(self, CAT):$/;"	m	class:CATALOG
+complete	src/starbug.py	/^    def complete(self, text, state):$/;"	m	class:StarBug
+construct_colours	src/sourceclass.py	/^    def construct_colours(self, c1=[0,1], c2=[1,2]):$/;"	m	class:Source
+construct_raw_data	src/catclass.py	/^    def construct_raw_data(self, catalog_style='custom', catalog_filename='', catalog=None):$/;"	m	class:CATALOG
+convert_dtype	src/fitsclass.py	/^    def convert_dtype(self, dtype='float32'):$/;"	m	class:FITS
+convert_dtype	src/starbug.py	/^    def convert_dtype(self):$/;"	m	class:StarBug
+coo	tools/coo2reg.py	/^coo = genfromtxt(argv[1], skip_header=2)[:,1:3]$/;"	v
+createExportString	src/sourceclass.py	/^    def createExportString(self, style='full', extras=True):$/;"	m	class:Source
+createExportString	src/xsourceclass.py	/^    def createExportString(self, full=False):$/;"	m	class:Source
+crop	src/fitsclass.py	/^    def crop(self, auto=True):$/;"	m	class:FITS
+cut_below	src/starbug.py	/^    def cut_below(self):$/;"	m	class:StarBug
+cut_lowconfidence	src/catclass.py	/^    def cut_lowconfidence(self):$/;"	m	class:CATALOG
+d	tools/fits64_to_fits32.py	/^d = img[0].data$/;"	v
+darkFrame_build	src/common_tasks.py	/^def darkFrame_build(darks):$/;"	f
+darkFrame_subtract	src/common_tasks.py	/^def darkFrame_subtract(fitslist, dark):$/;"	f
+darkframe_subtract	src/starbug.py	/^    def darkframe_subtract(self):$/;"	m	class:StarBug
+data	tools/dustcorrection.py	/^    data = np.genfromtxt("test\/dereddening_teststars.txt", skip_header=1)$/;"	v
+data_crop	src/catclass.py	/^    def data_crop(self):$/;"	m	class:CATALOG
+del_fft	src/fitsclass.py	/^    def del_fft(self):$/;"	m	class:FITS
+delete	src/starbug.py	/^    def delete(self):$/;"	m	class:StarBug
+delete_group	src/starbug.py	/^    def delete_group(self):$/;"	m	class:StarBug
+delimiter	tools/scConvert.py	/^    delimiter = sys.argv[3][0]$/;"	v
+delimiter	tools/scConvert.py	/^delimiter = ' '$/;"	v
+display	src/catclass.py	/^    def display(self):$/;"	m	class:CATALOG
+display	src/fitsclass.py	/^    def display(self, filename=''):$/;"	m	class:FITS
+display	src/parse_config.py	/^def display(options):$/;"	f
+display	src/starbug.py	/^    def display(self):$/;"	m	class:StarBug
+display_header	src/starbug.py	/^    def display_header(self):$/;"	m	class:StarBug
+display_loaded	src/starbug.py	/^    def display_loaded(self):$/;"	m	class:StarBug
+display_options	src/starbug.py	/^    def display_options(self):$/;"	m	class:StarBug
+divide	src/fitsclass.py	/^    def divide(self, factor):$/;"	m	class:FITS
+dtype_convert	src/common_tasks.py	/^def dtype_convert(fitslist, dtype='float32'):$/;"	f
+dustCorrection	src/catclass.py	/^    def dustCorrection(self):$/;"	m	class:CATALOG
+dustCorrection	tools/dustcorrection.py	/^def dustCorrection(data):$/;"	f
+dy	src/chi.py	/^    dy= [0.1, 0.1, 0.05, 0.4, 0.1]$/;"	v
+edgecase_constructPleiades	src/catclass.py	/^    def edgecase_constructPleiades(self, catalog_filename=''):$/;"	m	class:CATALOG
+epochMatch	src/starbug.py	/^    def epochMatch(self):$/;"	m	class:StarBug
+exit	src/starbug.py	/^    def exit(self):$/;"	m	class:StarBug
+export	src/fitsclass.py	/^    def export(self, filename='', overwrite=False):$/;"	m	class:FITS
+exportOFFSET	src/common_tasks.py	/^def exportOFFSET(fitslist, filename='auto'):$/;"	f
+exportRegion	src/starbug.py	/^    def exportRegion(self):$/;"	m	class:StarBug
+exportRegionfile	src/catclass.py	/^    def exportRegionfile(self):$/;"	m	class:CATALOG
+exportcat	src/catclass.py	/^    def exportcat(self):$/;"	m	class:CATALOG
+exportcat	src/starbug.py	/^    def exportcat(self):$/;"	m	class:StarBug
+exportoffset	src/starbug.py	/^    def exportoffset(self):$/;"	m	class:StarBug
+f1	src/common_tasks.py	/^    f1 = FITS('..\/test\/frame1.fits')$/;"	v
+f1	src/fitsclass.py	/^    f1 = FITS('\/home\/conor\/science\/StarClusters2\/middle\/out\/sean_g_10s_tile_001.fits')$/;"	v
+f2	src/common_tasks.py	/^    f2 = FITS('..\/test\/frame2.fits')$/;"	v
+f2	src/fitsclass.py	/^    f2 = FITS('\/home\/conor\/science\/StarClusters2\/middle\/out\/sean_g_10s_tile_002.fits')$/;"	v
+f3	src/common_tasks.py	/^    f3 = FITS('..\/test\/frame3.fits')$/;"	v
+f3	src/fitsclass.py	/^    f3 = FITS('\/home\/conor\/science\/StarClusters2\/middle\/out\/sean_g_10s_tile_003.fits')$/;"	v
+file_loadin	src/starbug.py	/^    def file_loadin(self):$/;"	m	class:StarBug
+filename_in	tools/scConvert.py	/^filename_in = sys.argv[1]$/;"	v
+filename_out	tools/scConvert.py	/^    filename_out = sys.argv[2]$/;"	v
+find	src/starbug.py	/^    def find(self):$/;"	m	class:StarBug
+fitsfromtxt	src/fileio.py	/^def fitsfromtxt(filename):$/;"	f
+flatField_divide	src/common_tasks.py	/^def flatField_divide(fitslist, flat):$/;"	f
+flatFrame_build	src/common_tasks.py	/^def flatFrame_build(flats, dark=False):$/;"	f
+flatfield_divide	src/starbug.py	/^    def flatfield_divide(self):$/;"	m	class:StarBug
+fromfile	src/catclass.py	/^    def fromfile(self, filename, skipheader=3):$/;"	m	class:CATALOG
+fromfits	src/catclass.py	/^    def fromfits(self, filename):$/;"	m	class:CATALOG
+getCHI	src/simple_chisq.py	/^def getCHI(data,order):$/;"	f
+get_CHI	src/chi.py	/^def get_CHI(x, y, dy, order):$/;"	f
+get_CHIerr	src/chi.py	/^def get_CHIerr( x, y, dy, coeffs):$/;"	f
+get_Value	src/sourceclass.py	/^    def get_Value(self, key='flux', epoch=0, band=0):$/;"	m	class:Source
+get_cat	src/starbug.py	/^    def get_cat(self, string='Name of loaded catalog >> '):$/;"	m	class:StarBug
+get_fft	src/fitsclass.py	/^    def get_fft(self):$/;"	m	class:FITS
+get_group	src/starbug.py	/^    def get_group(self, string='Name of loaded group >> '):$/;"	m	class:StarBug
+get_offset	src/fitsclass.py	/^    def get_offset(self, fitsobj, calcFFTs=False):$/;"	m	class:FITS
+get_simpleChierr	src/chi.py	/^def get_simpleChierr(coeffs, minX):$/;"	f
+get_value	src/parse_config.py	/^def get_value(string, lines=False, dtype=str, configfile='config'):$/;"	f
+h	tools/fits64_to_fits32.py	/^h = img[0].header$/;"	v
+img	tools/fits64_to_fits32.py	/^img = fits.open(sys.argv[1])$/;"	v
+infile	tools/scConvert.py	/^infile = open(filename_in, 'r')$/;"	v
+letters	tools/scConvert.py	/^letters = string.ascii_uppercase$/;"	v
+listfromtxt	src/fileio.py	/^def listfromtxt(filename, comment='#'):$/;"	f
+load	src/parse_config.py	/^def load(config='config'):$/;"	f
+load_options	src/fitsclass.py	/^    def load_options(self, options):$/;"	m	class:FITS
+loadcat	src/starbug.py	/^    def loadcat(self):$/;"	m	class:StarBug
+loadconfig	src/catclass.py	/^    def loadconfig(self):$/;"	m	class:CATALOG
+mainloop	src/starbug.py	/^    def mainloop(self):$/;"	m	class:StarBug
+manual	src/starbug.py	/^    def manual(self):$/;"	m	class:StarBug
+match	src/catclass.py	/^    def match(self, CAT, regime='band'):$/;"	m	class:CATALOG
+move	src/starbug.py	/^    def move(self):$/;"	m	class:StarBug
+multiply	src/fitsclass.py	/^    def multiply(self, factor):$/;"	m	class:FITS
+n	tools/scConvert.py	/^            n = string.atol(p)$/;"	v
+nan_to_zero	src/fitsclass.py	/^    def nan_to_zero(self):$/;"	m	class:FITS
+new	tools/fits64_to_fits32.py	/^new = np.array(d, dtype='float32')$/;"	v
+normalise	src/fitsclass.py	/^    def normalise(self, scale='max'):$/;"	m	class:FITS
+normaliseEXPTIME	src/fitsclass.py	/^    def normaliseEXPTIME(self, etime=1):$/;"	m	class:FITS
+normaliseEXPTIME	src/starbug.py	/^    def normaliseEXPTIME(self):$/;"	m	class:StarBug
+nullar	src/tests/add_offset.py	/^nullar = np.zeros((len(a1)+offset[0], len(a1[0])+offset[1]))$/;"	v
+nullmatch	src/starbug.py	/^    def nullmatch(self):$/;"	m	class:StarBug
+offset	src/tests/add_offset.py	/^offset = (2,1)$/;"	v
+order	src/chi.py	/^    order=3$/;"	v
+out	src/simple_chisq.py	/^    out = main(readfromFile(sys.argv[1]), order)$/;"	v
+out	tools/fits64_to_fits32.py	/^out = fits.PrimaryHDU(data = new, header=h)$/;"	v
+outfile	tools/scConvert.py	/^    outfile = open(filename_out, 'w')$/;"	v
+outfile	tools/scConvert.py	/^    outfile = sys.stdout$/;"	v
+parse_key	src/parse_config.py	/^def parse_key(line, separator='='):$/;"	f
+parse_value	src/parse_config.py	/^def parse_value(line, separator='='):$/;"	f
+parser	main.py	/^parser = argparse.ArgumentParser(description='parse some args')$/;"	v
+polynomial	src/simple_chisq.py	/^def polynomial(coeffs, x, order):$/;"	f
+pre_adjust	src/starbug.py	/^    def pre_adjust(self):$/;"	m	class:StarBug
+pre_adjustments	src/common_tasks.py	/^def pre_adjustments( fitslist ):$/;"	f
+r	tools/coo2reg.py	/^r = argv[2] if len(argv)==3 else 5$/;"	v
+readfromFile	src/simple_chisq.py	/^def readfromFile(filename):$/;"	f
+readin	src/starbug.py	/^    def readin(self, string=''):$/;"	m	class:StarBug
+readinOFFSET	src/common_tasks.py	/^def readinOFFSET(fitslist, filename):$/;"	f
+reset_completer	src/starbug.py	/^    def reset_completer(self):$/;"	m	class:StarBug
+row	tools/scConvert.py	/^row=0$/;"	v
+s	src/sourceclass.py	/^    s = Source( mag=np.array([1,np.nan]), bands=2, epochs=1)$/;"	v
+s1	src/sourceclass.py	/^    s1 = Source(ra=0,dec=0,flux=11, fluxerr=1, mag=2, magerr=1)$/;"	v
+s1	src/xsourceclass.py	/^    s1 = Source(ra=0,dec=0,flux=11, fluxerr=1, mag=1, magerr=1)$/;"	v
+s2	src/sourceclass.py	/^    s2 = Source(ra=0,dec=0,flux=12, fluxerr=1, mag=1, magerr=1)$/;"	v
+s2	src/xsourceclass.py	/^    s2 = Source(ra=0,dec=0,flux=12, fluxerr=1, mag=1, magerr=1)$/;"	v
+s3	src/sourceclass.py	/^    s3 = Source(ra=0,dec=0,flux=21, fluxerr=3, mag=0, magerr=1)$/;"	v
+save	src/common_tasks.py	/^def save(f):$/;"	f
+save	src/starbug.py	/^    def save(self, filename=''):$/;"	m	class:StarBug
+saveas	src/starbug.py	/^    def saveas(self):$/;"	m	class:StarBug
+scale	src/fitsclass.py	/^    def scale(self, a=2):$/;"	m	class:FITS
+scale	src/starbug.py	/^    def scale(self):$/;"	m	class:StarBug
+set_AbsoluteMag	src/sourceclass.py	/^    def set_AbsoluteMag(self, Maglist, error):$/;"	m	class:Source
+set_colours	src/sourceclass.py	/^    def set_colours(self, colour1=0, colour2=0):$/;"	m	class:Source
+set_distance	src/sourceclass.py	/^    def set_distance(self, distance, error):$/;"	m	class:Source
+set_means	src/xsourceclass.py	/^    def set_means(self):$/;"	m	class:Source
+setup	src/catclass.py	/^    def setup(self):$/;"	m	class:CATALOG
+sigma_clip	src/fitsclass.py	/^    def sigma_clip(self, sigma):$/;"	m	class:FITS
+single_match	src/catclass.py	/^    def single_match(self, cat):$/;"	m	class:CATALOG
+single_select	src/starbug.py	/^    def single_select(self, group):$/;"	m	class:StarBug
+stack	src/fitsclass.py	/^    def stack(self, fitslist, crop=True, update_header=True):$/;"	m	class:FITS
+stack	src/starbug.py	/^    def stack(self):$/;"	m	class:StarBug
+starbug	main.py	/^starbug = StarBug()$/;"	v
+stats	src/starbug.py	/^    def stats(self):$/;"	m	class:StarBug
+subtract	src/fitsclass.py	/^    def subtract(self, fitsobj):$/;"	m	class:FITS
+telescopeTEMP	src/starbug.py	/^    def telescopeTEMP(self):$/;"	m	class:StarBug
+terminal	src/starbug.py	/^    def terminal(self):$/;"	m	class:StarBug
+text	tools/scConvert.py	/^text = ["# Produced by convert_csv_to_sc.py" ]$/;"	v
+tileMatch	src/starbug.py	/^    def tileMatch(self):$/;"	m	class:StarBug
+tmp_GRG	src/catclass.py	/^    def tmp_GRG(self):$/;"	m	class:CATALOG
+tmp_distance	src/starbug.py	/^    def tmp_distance(self):$/;"	m	class:StarBug
+tmp_dustCorrection	src/starbug.py	/^    def tmp_dustCorrection(self):$/;"	m	class:StarBug
+unit_scale	src/fitsclass.py	/^    def unit_scale(self):$/;"	m	class:FITS
+update_header	src/starbug.py	/^    def update_header(self):$/;"	m	class:StarBug
+x	src/chi.py	/^    x = [1, 2, 3, 4, 5]$/;"	v
+x	src/chi.py	/^    x = np.arange(0,5, 0.1)$/;"	v
+xcalibrate	src/catclass.py	/^    def xcalibrate(self, unitscale='None'):$/;"	m	class:CATALOG
+xy2radec	src/catclass.py	/^    def xy2radec(self):$/;"	m	class:CATALOG
+y	src/chi.py	/^    y = [1.1, 1.9, 3.01, 4.3, 4.9]$/;"	v
+yank	src/starbug.py	/^    def yank(self):$/;"	m	class:StarBug
+zero_to_nan	src/fitsclass.py	/^    def zero_to_nan(self):$/;"	m	class:FITS

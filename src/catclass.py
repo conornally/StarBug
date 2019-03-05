@@ -498,10 +498,11 @@ class CATALOG(object):
         gs = GridSpec(5,3, hspace=0.9)
 
         ax = plt.subplot(gs[:3,:])
+        ax.set_ylim(-1, 3)
         plt.gca().invert_yaxis()
         ax2 = plt.subplot(gs[3:,:])
-        ax.axvline(-0.526)
-        ax.axhline(-0.252)
+        #ax.axvline(-0.526)
+        #ax.axhline(-0.252)
         ax.scatter(mainsequence[:,1], mainsequence[:,2], c='k', s=10)
 
         for s in self.sourcelist:
@@ -634,6 +635,7 @@ class CATALOG(object):
         Dn = pli_distance *10.0**(-deltaM/5.)
         dDn= np.sqrt((( (-pli_distance*np.log(10)/5.)*10.0**(-deltaM/5.)  )*deltaMerr)**2.0)
         print(Dn, dDn)
+        print("Distance Modulus: %f"%(-5.0*np.log10(Dn/10.0)))
 
         ax2.scatter(colour, dm, s=5, c='k')
         ax2.errorbar(colour, dm, yerr=ddm, linewidth=0, elinewidth=1, c='k')
